@@ -1,0 +1,42 @@
+﻿<!-- Copyright © LECO Corporation 2013.  All Rights Reserved. -->
+
+<UserControl x:Class="CornerstoneRemoteControlClient.Views.DataViews.FreeFormDataView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Style="{StaticResource HeaderText16}" Margin="0,10,0,10">
+                Use these controls to enter raw command text to be sent to Cornerstone.
+        </TextBlock>
+        
+        <StackPanel Grid.Row="1">
+            <TextBox Text="{Binding UserCommandText}" Height="200"/>
+            <StackPanel Orientation="Horizontal" Margin="0,5">
+                <Button Command="{Binding ExecuteCommand}" IsEnabled="{Binding CanExecuteCommand}" Content="Execute Command" HorizontalAlignment="Left" Margin="0,10,0,15" Padding="4"/>
+
+                <TextBlock Text="{Binding ErrorText}" Style="{StaticResource ErrorText}" Margin="10,5" VerticalAlignment="Center"></TextBlock>
+            </StackPanel>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="2" Background="Black" Margin="0,10" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Traffic.ObservableCollection}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBox IsReadOnly="True" BorderThickness="0" Text="{Binding Data, Mode=OneWay}" Style="{StaticResource TrafficStyle}">
+                        </TextBox>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>

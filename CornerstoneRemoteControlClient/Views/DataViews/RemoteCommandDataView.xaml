@@ -1,0 +1,103 @@
+﻿<!-- Copyright © LECO Corporation 2013.  All Rights Reserved. -->
+
+<UserControl x:Class="CornerstoneRemoteControlClient.Views.DataViews.RemoteCommandDataView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:viewModels="clr-namespace:CornerstoneRemoteControlClient.ViewModels"
+             xmlns:views="clr-namespace:CornerstoneRemoteControlClient.Views"
+             xmlns:commandViewModels="clr-namespace:CornerstoneRemoteControlClient.ViewModels.CommandViewModels"
+             xmlns:commandViews="clr-namespace:CornerstoneRemoteControlClient.Views.CommandViews"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+
+    <UserControl.Resources>
+
+        <DataTemplate DataType="{x:Type commandViewModels:ModifySamplesCommandViewModel}">
+            <commandViews:ModifySamplesCommandView/>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type commandViewModels:AddSamplesCommandViewModel}">
+            <commandViews:AddSamplesCommandView/>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type commandViewModels:TransmitSetAndRepsCommandViewModel}">
+            <commandViews:TransmitSetAndRepCommandView/>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type commandViewModels:SetAndRepsCommandViewModel}">
+            <commandViews:SetAndRepsCommandView/>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type commandViewModels:PauseSamplesCommandViewModel}">
+            <commandViews:PauseSamplesCommandView/>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type commandViewModels:ParameterlessCommandViewModel}">
+            <commandViews:ParameterlessCommandView/>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type commandViewModels:AttributeParameteredCommandViewModel}">
+            <commandViews:AttributeParameteredCommandView/>
+        </DataTemplate>
+
+    </UserControl.Resources>
+
+    <Grid Margin="15">
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width=".20*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <DockPanel Grid.Column="0">
+            <TextBlock Text="Available Commands:" Style="{StaticResource HeaderText16}" Margin="2" DockPanel.Dock="Top"/>
+            <ListBox ItemsSource="{Binding Commands.ObservableCollection}" SelectedItem="{Binding CurrentCommand}" HorizontalContentAlignment="Stretch">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}" Style="{StaticResource HeaderText14}"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+        <Grid Grid.Column="1" Margin="15,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="{Binding AvailabilityText}" Style="{StaticResource HeaderText16}" Grid.Row="0"/>
+
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <ContentControl Content="{Binding CurrentCommand}" Grid.Row="0" Margin="0,10"/>
+
+                <StackPanel Orientation="Horizontal" Grid.Row="1">
+                    <Button Command="{Binding ExecuteCommand}" IsEnabled="{Binding CanExecuteCommand}" Content="Execute Command" HorizontalAlignment="Left" Margin="0,10,0,15" Padding="4"/>
+
+                    <TextBlock Text="{Binding ErrorText}" Style="{StaticResource ErrorText}" Margin="10,5" VerticalAlignment="Center"></TextBlock>
+                </StackPanel>
+
+                <ScrollViewer Grid.Row="2" Background="Black">
+                    <ItemsControl ItemsSource="{Binding Traffic.ObservableCollection}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBox IsReadOnly="True" BorderThickness="0" Text="{Binding Data, Mode=OneWay}" Style="{StaticResource TrafficStyle}">
+                                </TextBox>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+            </Grid>
+        </Grid>
+
+    </Grid>
+</UserControl>

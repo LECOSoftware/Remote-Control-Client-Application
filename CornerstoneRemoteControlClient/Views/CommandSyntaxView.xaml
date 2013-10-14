@@ -1,0 +1,18 @@
+﻿<!-- Copyright © LECO Corporation 2013.  All Rights Reserved. -->
+
+<UserControl x:Class="CornerstoneRemoteControlClient.Views.CommandSyntaxView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+    
+
+    <StackPanel>
+        <TextBlock Text="Command Syntax:" Style="{StaticResource HeaderText16}" VerticalAlignment="Center"/>
+        <ScrollViewer MaxHeight="100" VerticalScrollBarVisibility="Auto">
+            <TextBox Background="Transparent" IsReadOnly="True" Text="{Binding CommandSyntax, Mode=OneWay}" BorderThickness="0" Style="{StaticResource SyntaxText}"/>
+        </ScrollViewer>
+    </StackPanel>
+</UserControl>

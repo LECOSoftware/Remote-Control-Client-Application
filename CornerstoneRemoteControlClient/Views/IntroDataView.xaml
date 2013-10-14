@@ -1,0 +1,47 @@
+﻿<!-- Copyright © LECO Corporation 2009-2013.  All Rights Reserved. -->
+
+<UserControl x:Class="CornerstoneRemoteControlClient.Views.IntroDataView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+    
+    <Grid Margin="15">
+
+        <StackPanel>
+            <TextBlock Text="This application has been created to demonstrate the remote capabilities of LECO's Cornerstone software." Style="{StaticResource HeaderText16}" Margin="0,10"/>
+            <TextBlock Text="Remote functionality within Cornerstone is controlled by the presence of the following purchased options programmed onto the Cornerstone copy protection key:" Style="{StaticResource HeaderText16}" Margin="0,10"/>
+            
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="25"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Column="1" Grid.Row="0">
+                    <TextBlock Text="Remote Query (RQ)" Style="{StaticResource HeaderText14}" Margin="0,10,0,0" VerticalAlignment="Center" TextAlignment="Left"/>
+                    <TextBlock Text="With this option, Cornerstone provides remote methods to query the state of the instrument and view the contents of the instrument database. The methods provided with this option are identical to those available to Cornerstone's mobile applications." TextWrapping="Wrap" Margin="0,1,0,0" VerticalAlignment="Top" TextAlignment="Left"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" Grid.Row="1">
+                    <TextBlock Text="Remote Sample Login (RSL)" Style="{StaticResource HeaderText14}" Margin="0,10,0,0" VerticalAlignment="Center" TextAlignment="Left"/>
+                    <TextBlock Text="With this option, Cornerstone provides all of the functionality of the RQ option, while adding the ability the queue up samples to be added to the Cornerstone database by the operator." TextWrapping="Wrap" Margin="0,1,0,0" VerticalAlignment="Top" TextAlignment="Left"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Grid.Row="2">
+                    <TextBlock Text="Remote Control (RC)" Style="{StaticResource HeaderText14}" Margin="0,10,0,0" VerticalAlignment="Center" TextAlignment="Left"/>
+                    <TextBlock Text="With this option, Cornerstone provides all of the functionality of the RQ and RSL options, while adding the ability to control the instrument when it is placed in remote control mode." TextWrapping="Wrap" Margin="0,1,0,0" VerticalAlignment="Top" TextAlignment="Left"/>
+                </StackPanel>
+
+            </Grid>
+
+        </StackPanel>
+    </Grid>
+</UserControl>

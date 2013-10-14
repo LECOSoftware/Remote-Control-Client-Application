@@ -1,0 +1,82 @@
+﻿<UserControl x:Class="CornerstoneRemoteControlClient.Views.AddSamplesCommandView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:views="clr-namespace:CornerstoneRemoteControlClient.Views"
+             xmlns:helpers="clr-namespace:CornerstoneRemoteControlClient.Helpers"
+             xmlns:viewModels="clr-namespace:CornerstoneRemoteControlClient.ViewModels"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+    
+    <UserControl.Resources>
+
+        <DataTemplate DataType="{x:Type viewModels:BooleanAttributeParameter}">
+            <views:BooleanAttributeParameterView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:AttributeParameter}">
+            <views:AttributeParameterView/>
+        </DataTemplate>
+
+    </UserControl.Resources>
+
+    <Grid>
+        <Rectangle StrokeThickness="0.5" Stroke="Black"/>
+
+        <StackPanel Margin="10">
+
+            <views:CommandNameView DataContext="{Binding}" Margin="0,0,0,5"/>
+
+            <TextBlock Text="Parameters:" Style="{StaticResource HeaderText16}" VerticalAlignment="Center" Margin="0,15,0,5"/>
+
+            <StackPanel Margin="0,5,0,5" Orientation="Horizontal">
+                <RadioButton IsChecked="{Binding AddToNewSet, Converter={helpers:InverseBooleanConverter}}" Content="Add Replicates to an Existing Set"/>
+                <RadioButton IsChecked="{Binding AddToNewSet}" Content="Add Replicates to a New Set" Margin="10,0,0,0"/>
+            </StackPanel>
+
+            <Border CornerRadius="10" Background="Bisque" Visibility="{Binding AddToNewSet, Converter={StaticResource BoolToVisibility}}" BorderBrush="DarkGray" BorderThickness="1">
+                <ItemsControl ItemsSource="{Binding NewSetParameters.ObservableCollection}" Margin="5">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ContentControl Content="{Binding}" Margin="0,5"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+
+            <Border CornerRadius="10" Background="Bisque" Visibility="{Binding AddToNewSet, Converter={helpers:NotBooleanToVisibilityConverter}}" BorderBrush="DarkGray" BorderThickness="1">
+                <ItemsControl ItemsSource="{Binding ExistingSetParameters.ObservableCollection}" Margin="5">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ContentControl Content="{Binding}" Margin="0,5"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+
+            <StackPanel Margin="0,10,0,5" Orientation="Horizontal">
+                <TextBlock Text="Replicates:" Style="{StaticResource HeaderText16}" VerticalAlignment="Center"/>
+                <Button Width="20" Height="20" Style="{StaticResource CircleButton}" Margin="10,0" Command="{Binding AddReplicateCommand}">
+                    <Button.Content>
+                        <TextBlock Text="+" FontWeight="Bold" FontSize="20" Margin="0,-6,0,0"/>
+                    </Button.Content>
+                </Button>
+            </StackPanel>
+
+            <Grid>
+                <Rectangle StrokeThickness="0.5" Stroke="Black" Visibility="{Binding HasReplicates, Converter={StaticResource BoolToVisibility}}"/>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="200" Margin="2">
+                    <ItemsControl ItemsSource="{Binding Replicates.ObservableCollection}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <views:DeletableParameterView/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+
+            <views:CommandSyntaxView Margin="0,10,0,5" DataContext="{Binding}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
