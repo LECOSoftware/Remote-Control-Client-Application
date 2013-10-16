@@ -19,7 +19,7 @@
         </TextBlock>
         
         <StackPanel Grid.Row="1">
-            <TextBox Text="{Binding UserCommandText}" Height="200"/>
+            <TextBox Text="{Binding UserCommandText}" Height="200" AcceptsReturn="True"/>
             <StackPanel Orientation="Horizontal" Margin="0,5">
                 <Button Command="{Binding ExecuteCommand}" IsEnabled="{Binding CanExecuteCommand}" Content="Execute Command" HorizontalAlignment="Left" Margin="0,10,0,15" Padding="4"/>
 
