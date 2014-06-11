@@ -60,8 +60,8 @@ namespace CornerstoneRemoteControlClient.ViewModels.CommandViewModels
                         {
                             foreach (var field in setOrRep.Fields)
                             {
-                                var fieldElement = new XElement("field");
-                                fieldElement.SetAttributeValue("id", field.Id ?? "");
+                                var fieldElement = new XElement("Field");
+                                fieldElement.SetAttributeValue("Id", field.Id ?? "");
                                 fieldElement.Value = field.Value ?? "";
                                 element.Add(fieldElement);
                             }

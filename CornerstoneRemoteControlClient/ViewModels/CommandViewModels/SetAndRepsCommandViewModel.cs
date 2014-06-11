@@ -76,8 +76,8 @@ namespace CornerstoneRemoteControlClient.ViewModels.CommandViewModels
 
                 replicate.PropertyChanged += SetOrRepPropertyChanged;
 
-                replicate.AddParameter("SetKey", "The unique key that identifies the set containing the replicate whose paused state is being modified. Leading zeros may be omitted.", "0");
-                replicate.AddParameter("Tag", "The identifier of the replicate within the set whose paused state is being modified.", "0");
+                replicate.AddParameter("SetKey", "The unique key that identifies the set. Leading zeros may be omitted.", "0");
+                replicate.AddParameter("Tag", "The identifier of the replicate within the set.", "0");
             }
 
             RaisePropertyChanged("HasItems");

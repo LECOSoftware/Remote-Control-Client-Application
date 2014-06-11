@@ -59,7 +59,7 @@ namespace CornerstoneRemoteControlClient.ViewModels.CommandViewModels
 
                 replicate.AddParameter("SetKey", "The unique key that identifies the set containing the replicate whose paused state is being modified. Leading zeros may be omitted.", "0");
                 replicate.AddParameter("Tag", "The identifier of the replicate within the set whose paused state is being modified.", "0");
-                replicate.AddParameter("Paused", "Indicates if the replicate is to be paused or not.", true);
+                replicate.AddParameter("Paused", "Indicates if the replicate is to be paused or not. Valid values are \"ManuallyPaused\" and \"NotPaused\".", "ManuallyPaused");
             }
 
             RaisePropertyChanged("HasReplicates");

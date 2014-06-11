@@ -35,7 +35,7 @@ namespace CornerstoneRemoteControlClient.Communications
             _heartbeatTimer = new System.Timers.Timer();
             _heartbeatTimer.Elapsed += HeartbeatTimerOnElapsed;
             _heartbeatTimer.Interval = 30000; //30 seconds
-            
+
             //Create the heartbeat command document once so we don't have to keep creating it every time we send a heartbeat command.
             _heartbeatEventArgs = new SendDataEventArgs(XDocument.Parse("<Heartbeat/>"), null);
 
@@ -219,14 +219,14 @@ namespace CornerstoneRemoteControlClient.Communications
                     //Get the number of bytes contained in the command response.
                     int length = BitConverter.ToInt32(_receiveBuffer, 0);
                     //Create a state object to hold onto the response.
-                    stateObject = new ReceivedDataStateObject {Length = length};
+                    stateObject = new ReceivedDataStateObject { Length = length };
 
                     //check if we have received more than 4 bytes. The 4 bytes contains the length of the following
                     //data. If we have received more than the 4 bytes, we need to add that to our buffer.
                     if (bytes > 4)
                     {
                         stateObject.Length -= (bytes - 4);
-                        stateObject.Data += Encoding.Unicode.GetString(_receiveBuffer, 4, bytes-4);
+                        stateObject.Data += Encoding.Unicode.GetString(_receiveBuffer, 4, bytes - 4);
 
                         //check if we have received it all.
                         if (stateObject.Length <= 0)
@@ -270,16 +270,23 @@ namespace CornerstoneRemoteControlClient.Communications
 
         private void ProcessReceivedData(ReceivedDataStateObject stateObject)
         {
-            //We have received all of the data in the response.
-            if (_pendingCommand != null)
+            if (stateObject == null || stateObject.Data == null)
             {
-                if (_pendingCommand.Sender != null)
+                return;
+            }
+
+            var receivedData = XDocument.Parse(stateObject.Data);
+            var root = receivedData.Root;
+            if (root == null)
+            {
+                return;
+            }
+
+            if (_pendingCommand != null && root.Name.LocalName != "CornerstoneMessage")
+            {
+                var sender = _pendingCommand.Sender;
+                if (sender != null)
                 {
-                    var sender = _pendingCommand.Sender;
-
-                    //Create an XML document from the response data.
-                    var receivedData = XDocument.Parse(stateObject.Data);
-
                     //Send the received data back to the object that issued the command so it can process the response.
                     sender.ProcessResponse(receivedData);
                 }
@@ -289,23 +296,7 @@ namespace CornerstoneRemoteControlClient.Communications
             }
             else
             {
-                ProcessMessage(stateObject.Data);
-            }
-        }
-
-        /// <summary>
-        /// Handles asynchronous messages received from Cornerstone.
-        /// </summary>
-        /// <param name="messageData">Message payload.</param>
-        private void ProcessMessage(String messageData)
-        {
-            var messageDoc = XDocument.Parse(messageData);
-            if (messageDoc.Root != null)
-            {
-                if (messageDoc.Root.Name.LocalName == "CornerstoneMessage")
-                {
-                    EventAggregatorContext.Current.GetEvent<MessageDataEvent>().Publish(messageDoc);
-                }
+                EventAggregatorContext.Current.GetEvent<MessageDataEvent>().Publish(receivedData);
             }
         }
 

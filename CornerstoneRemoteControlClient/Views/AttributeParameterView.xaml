@@ -20,8 +20,8 @@
         </Grid.RowDefinitions>
         
         <StackPanel Orientation="Horizontal" Grid.ColumnSpan="2">
-            <TextBlock Text="{Binding Name}" Style="{StaticResource HeaderText14}" VerticalAlignment="Bottom" Margin="0,0,15,0"/>
-            <TextBlock Text="{Binding Description}" Style="{StaticResource DescriptionText}" VerticalAlignment="Bottom"/>
+            <TextBox Text="{Binding Name, Mode=OneTime}" Style="{StaticResource HeaderText14Box}" VerticalAlignment="Bottom" Margin="0,0,15,0"/>
+            <TextBox Text="{Binding Description, Mode=OneTime}" Style="{StaticResource DescriptionTextBox}" VerticalAlignment="Bottom"/>
         </StackPanel>
         <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Grid.Row="1"/>
     </Grid>

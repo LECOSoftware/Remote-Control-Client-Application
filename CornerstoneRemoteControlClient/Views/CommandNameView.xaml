@@ -20,8 +20,8 @@
             </Grid.ColumnDefinitions>
             
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Command:" Style="{StaticResource HeaderText16}" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                <TextBlock Text="{Binding Name}" Style="{StaticResource HeaderText16}" VerticalAlignment="Center"/>
+                <TextBox Text="Command:" Style="{StaticResource HeaderText16Box}" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                <TextBox Text="{Binding Name}" Style="{StaticResource HeaderText16Box}" VerticalAlignment="Center"/>
             </StackPanel>
 
             <StackPanel Grid.Column="1" HorizontalAlignment="Right">
@@ -33,6 +33,6 @@
             </StackPanel>
 
         </Grid>
-        <TextBlock Grid.Row="1" Margin="0,5,0,0" Text="{Binding Description}" Style="{StaticResource DescriptionText}"/>
+        <TextBox Grid.Row="1" Margin="0,5,0,0" Text="{Binding Description}" Style="{StaticResource DescriptionTextBox}"/>
     </Grid>
 </UserControl>

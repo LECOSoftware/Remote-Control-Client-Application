@@ -61,13 +61,6 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                 String description;
 
                 {
-                    name = "AutomationStatus";
-                    description = "Retrieves status data for the installed automation functionality.";
-                    var command = new AttributeParameteredCommandViewModel(name, description);
-                    command.AddParameter("Id", "When a value is present in this parameter, the command will retrieve only data for the automation functionality with the specified id.", "");
-                    Commands.Add(command);
-                }
-                {
                     name = "Ambient";
                     description = "Retrieves the detail data for the ambient corresponding to the specified key.";
                     var command = new AttributeParameteredCommandViewModel(name, description);
@@ -78,6 +71,13 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     name = "Ambients";
                     description = "Retrieves general data about each ambient on the instrument.";
                     var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
+                    name = "AutomationStatus";
+                    description = "Retrieves status data for the installed automation functionality.";
+                    var command = new AttributeParameteredCommandViewModel(name, description);
+                    command.AddParameter("Id", "When a value is present in this parameter, the command will retrieve only data for the automation functionality with the specified id.", "");
                     Commands.Add(command);
                 }
                 {
@@ -138,16 +138,10 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     Commands.Add(command);
                 }
                 {
-                    name = "PistonLocation";
-                    description = "Retrieves the state of the piston up and down switches.";
-                    var command = new ParameterlessCommandViewModel(name, description);
-                    Commands.Add(command);
-                }
-                {
                     name = "Prerequisite";
                     description = "Retrieves the detail data for the prerequisite corresponding to the specified key.";
                     var command = new AttributeParameteredCommandViewModel(name, description);
-                    command.AddParameter("Key", "The unique key that identifies the specific prerequisite for which detail data is to be retrieved.", "0");
+                    command.AddParameter("Key", "The unique key that identifies the specific prerequisite for which detail data is to be retrieved.", "");
                     Commands.Add(command);
                 }
                 {
@@ -200,9 +194,9 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                 }
                 {
                     name = "SetKeys";
-                    description = "Retrieves the unqiue key for each set.";
+                    description = "Retrieves the unique key for each set.";
                     var command = new AttributeParameteredCommandViewModel(name, description);
-                    command.AddParameter("FilterKey", "The unique key that identifies the filter to used when retrieving the sets. Leading zeros may be omitted.", "");
+                    command.AddParameter("FilterKey", "The unique key that identifies the filter to use when retrieving the sets. Leading zeros may be omitted.", "");
                     Commands.Add(command);
                 }
                 {
@@ -217,7 +211,7 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     name = "Sets";
                     description = "Retrieves general set data for the number of sets specified.";
                     var command = new AttributeParameteredCommandViewModel(name, description);
-                    command.AddParameter("FilterKey", "The unique key that identifies the filter to used when retrieving the sets. Leading zeros may be omitted.", "");
+                    command.AddParameter("FilterKey", "The unique key that identifies the filter to use when retrieving the sets. Leading zeros may be omitted.", "");
                     command.AddParameter("Number", "The number of sets to return.", "10");
                     command.AddParameter("StartAt", "The index of first set to return. If the default value (-1) is used, then the sets returned will be the most recent # of sets where # is specified in the Number parameter.", "-1");
                     Commands.Add(command);

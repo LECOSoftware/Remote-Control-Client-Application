@@ -17,10 +17,28 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
+        <Style x:Key="HeaderText14Box" TargetType="{x:Type TextBox}">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
         <Style x:Key="HeaderText16" TargetType="{x:Type TextBlock}">
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="16"></Setter>
             <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style x:Key="HeaderText16Box" TargetType="{x:Type TextBox}">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="16"></Setter>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
         </Style>
 
         <Style x:Key="SyntaxText" TargetType="{x:Type TextBox}">
@@ -40,6 +58,15 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
+        <Style x:Key="DescriptionTextBox" TargetType="{x:Type TextBox}">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        
         <Style x:Key="TrafficStyle">
             <Setter Property="TextBox.Background" Value="Transparent"/>
             <Setter Property="TextBox.TextWrapping" Value="Wrap"/>

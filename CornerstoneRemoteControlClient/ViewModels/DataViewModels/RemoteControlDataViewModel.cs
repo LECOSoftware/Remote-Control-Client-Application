@@ -81,10 +81,10 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                 }
                 {
                     name = "AssignNextToAnalyze";
-                    description = "Specifies the next replicate to analyze. If the Tag attribute is omitted or the value left at the default (0), then the first unanalyzed replicate within the specified set will be marked as next to analyze.";
+                    description = "Specifies the next replicate to analyze. If the ReplicateTag attribute is omitted or the value left at the default (0), then the first unanalyzed replicate within the specified set will be marked as next to analyze.";
                     var command = new AttributeParameteredCommandViewModel(name, description);
                     command.AddParameter("SetKey", "The unique key that identifies the set. Leading zeros may be omitted.", "0");
-                    command.AddParameter("Tag", "The identifier of the replicate within the set.", "0");
+                    command.AddParameter("ReplicateTag", "The identifier of the replicate within the set.", "0");
                     Commands.Add(command);
                 }
                 {
@@ -95,25 +95,25 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                 }
                 {
                     name = "DeleteSamples";
-                    description = "Attempts to delete the specified sets and replicates. Sets and replicates must first be marked as \"Excluded\" before being deleted.";
+                    description = "Deletes the specified sets and replicates. Analyzed replicates must first be marked as \"Excluded\" before being deleted.";
                     var command = new SetAndRepsCommandViewModel(name, description);
                     Commands.Add(command);
                 }
                 {
                     name = "ExcludeSamples";
-                    description = "Sets the state of the specified sets and replicates to be excluded.";
+                    description = "Marks the specified sets and replicates as excluded.";
                     var command = new SetAndRepsCommandViewModel(name, description);
                     Commands.Add(command);
                 }
                 {
                     name = "IncludeSamples";
-                    description = "Sets the state of the specified sets and replicates to be included.";
+                    description = "Marks the specified sets and replicates as included.";
                     var command = new SetAndRepsCommandViewModel(name, description);
                     Commands.Add(command);
                 }
                 {
                     name = "ModifySamples";
-                    description = "Modifies the values of fields on sets and replicates.";
+                    description = "Modifies the values of fields in sets and in replicates.";
                     var command = new ModifySamplesCommandViewModel(name, description);
                     Commands.Add(command);
                 }
@@ -134,6 +134,19 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     name = "RecalcSamples";
                     description = "Performs a recalculation on the specified sets and replicates.";
                     var command = new SetAndRepsCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
+                    name = "ResetCounter";
+                    description = "Performs a reset on the counter corresponding to the specified key.";
+                    var command = new AttributeParameteredCommandViewModel(name, description);
+                    command.AddParameter("Key", "The unique key that identifies the specific counter on which a reset will be performed. Leading zeros may be omitted.", "0");
+                    Commands.Add(command);
+                }
+                {
+                    name = "ResetCounters";
+                    description = "Performs a reset on all counters.";
+                    var command = new ParameterlessCommandViewModel(name, description);
                     Commands.Add(command);
                 }
                 {

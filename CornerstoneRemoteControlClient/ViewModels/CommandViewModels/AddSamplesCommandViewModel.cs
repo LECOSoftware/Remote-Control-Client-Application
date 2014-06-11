@@ -15,7 +15,7 @@ namespace CornerstoneRemoteControlClient.ViewModels.CommandViewModels
         #region Constructor
 
         public AddSamplesCommandViewModel(String name, String description, String cookie = "")
-            :base(name, description, cookie)
+            : base(name, description, cookie)
         {
             AddReplicateCommand = new RelayCommand(OnAddReplicate);
 
@@ -150,7 +150,8 @@ namespace CornerstoneRemoteControlClient.ViewModels.CommandViewModels
 
                     foreach (var setParameter in NewSetParameters)
                     {
-                        var element = new XElement(setParameter.Name) { Value = setParameter.AsString };
+                        var element = new XElement("Field") { Value = setParameter.AsString };
+                        element.SetAttributeValue("Id", setParameter.Name);
                         setElement.Add(element);
                     }
                 }
@@ -161,7 +162,7 @@ namespace CornerstoneRemoteControlClient.ViewModels.CommandViewModels
                 {
                     foreach (var existingParameter in ExistingSetParameters)
                     {
-                        var element = new XElement(existingParameter.Name) {Value = existingParameter.AsString};
+                        var element = new XElement(existingParameter.Name) { Value = existingParameter.AsString };
                         root.Add(element);
                     }
                 }
@@ -181,7 +182,8 @@ namespace CornerstoneRemoteControlClient.ViewModels.CommandViewModels
                     {
                         foreach (var repParameter in replicate.Parameters)
                         {
-                            var element = new XElement(repParameter.Name) { Value = repParameter.AsString };
+                            var element = new XElement("Field") { Value = repParameter.AsString };
+                            element.SetAttributeValue("Id", repParameter.Name);
                             replicateElement.Add(element);
                         }
                     }
