@@ -81,6 +81,12 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     Commands.Add(command);
                 }
                 {
+                    name = "AvailableLogs";
+                    description = "Retrieves the identifiers for each of the instrument logs.";
+                    var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
                     name = "Counter";
                     description = "Retrieves the detail data for the counter corresponding to the specified key.";
                     var command = new AttributeParameteredCommandViewModel(name, description);
@@ -90,6 +96,12 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                 {
                     name = "Counters";
                     description = "Retrieves general data about each counter on the instrument.";
+                    var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
+                    name = "ExceptionDirectory";
+                    description = "Retrieves the names of the files and subdirectories in the instrument's main exception directory.";
                     var command = new ParameterlessCommandViewModel(name, description);
                     Commands.Add(command);
                 }
@@ -119,6 +131,22 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     Commands.Add(command);
                 }
                 {
+                    name = "LogData";
+                    description = "Retrieves log entries from specifed log.";
+                    var command = new AttributeParameteredCommandViewModel(name, description);
+                    command.AddParameter("Log", "The unique log identifier that identifies the log from which data will be retrieved.", "");
+                    command.AddParameter("Start", "Log start date and time (GMT) in the form of: MM/DD/YYYY HH:MM:SS.fffff.", "");
+                    command.AddParameter("End", "Log end date and time (GMT) in the form of: MM/DD/YYYY HH:MM:SS.fffff.", "");
+                    command.AddParameter("MaxEntries", "Maxinum number of entries to retrieve.", "1000");
+                    Commands.Add(command);
+                }
+                {
+                    name = "LogDirectory";
+                    description = "Retrieves the names of the files and subdirectories in the instrument's main log directory.";
+                    var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
                     name = "Method";
                     description = "Retrieves the detail data for the method corresponding to the specified key.";
                     var command = new AttributeParameteredCommandViewModel(name, description);
@@ -128,6 +156,22 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                 {
                     name = "Methods";
                     description = "Retrieves general data about each method on the instrument.";
+                    var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
+                    name = "MondoData";
+                    description = "Retrieves mondo data entries from the mondo log.";
+                    var command = new AttributeParameteredCommandViewModel(name, description);
+                    command.AddParameter("PicId", "The unique key that identifies the ambient/solenod/switch for which data is to be retrieved.", "");
+                    command.AddParameter("Start", "Log start date and time (GMT) in the form of: MM/DD/YYYY HH:MM:SS.fffff.", "");
+                    command.AddParameter("End", "Log end date and time (GMT) in the form of: MM/DD/YYYY HH:MM:SS.fffff.", "");
+                    command.AddParameter("MaxEntries", "Maxinum number of entries to retrieve.", "1000");
+                    Commands.Add(command);
+                }
+                {
+                    name = "MondoDirectory";
+                    description = "Retrieves the names of the files and subdirectories in the instrument's main mondo data directory.";
                     var command = new ParameterlessCommandViewModel(name, description);
                     Commands.Add(command);
                 }
@@ -148,6 +192,13 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     name = "Prerequisites";
                     description = "Retrieves general data about each prerequisite on the instrument.";
                     var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
+                    name = "QCStatus";
+                    description = "Retrieves the quality control status for the specified method.";
+                    var command = new AttributeParameteredCommandViewModel(name, description);
+                    command.AddParameter("MethodKey", "The unique key that identifies the specific method for which quality control status is to be retrieved. Leading zeros may be omitted.", "0");
                     Commands.Add(command);
                 }
                 {
@@ -182,6 +233,19 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                 {
                     name = "Reports";
                     description = "Retrieves general data about each report on the instrument.";
+                    var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
+                    name = "Sequence";
+                    description = "Retrieves the execution status for the specified sequence.";
+                    var command = new AttributeParameteredCommandViewModel(name, description);
+                    command.AddParameter("Name", "The name of the sequence.", "");
+                    Commands.Add(command);
+                }
+                {
+                    name = "Sequences";
+                    description = "Retrieves the execution status for all the sequences defined within Cornerstone.";
                     var command = new ParameterlessCommandViewModel(name, description);
                     Commands.Add(command);
                 }

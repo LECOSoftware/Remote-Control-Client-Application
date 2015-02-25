@@ -74,6 +74,13 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     Commands.Add(command);
                 }
                 {
+                    name = "AddQcRectifyTrigger";
+                    description = "Adds replicate to initiate quality control rectification if necessary.";
+                    var command = new AttributeParameteredCommandViewModel(name, description);
+                    command.AddParameter("MethodKey", "The unique key that identifies the specific method for which quality control will be rectified. Leading zeros may be omitted.", "0");
+                    Commands.Add(command);
+                }
+                {
                     name = "Analyze";
                     description = "Starts the analysis sequence.";
                     var command = new ParameterlessCommandViewModel(name, description);
@@ -109,6 +116,14 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     name = "IncludeSamples";
                     description = "Marks the specified sets and replicates as included.";
                     var command = new SetAndRepsCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
+                    name = "InvalidateQCComponent";
+                    description = "Resets the specified quality control component.";
+                    var command = new AttributeParameteredCommandViewModel(name, description);
+                    command.AddParameter("MethodKey", "The unique key that identifies the specific method for which quality control will be reset. Leading zeros may be omitted.", "0");
+                    command.AddParameter("Component", "Indicates the quality control component to reset. ('Blanks', 'Checks' or 'All')", "All");
                     Commands.Add(command);
                 }
                 {

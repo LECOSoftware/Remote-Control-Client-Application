@@ -13,18 +13,19 @@
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <IsWebBootstrapper>true</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
-    <Install>false</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
+    <Install>true</Install>
+    <InstallFrom>Web</InstallFrom>
+    <UpdateEnabled>true</UpdateEnabled>
     <UpdateMode>Foreground</UpdateMode>
     <UpdateInterval>7</UpdateInterval>
     <UpdateIntervalUnits>Days</UpdateIntervalUnits>
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>6</ApplicationRevision>
+    <InstallUrl>http://lecoremotecontrolclient.codeplex.com/releases/clickonce/</InstallUrl>
+    <ApplicationRevision>7</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -382,6 +383,6 @@
   </Target>
   -->
   <Target Name="AfterCompile">
-    <Exec Command="&quot;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Bin\signtool.exe&quot; sign /v /sha1 D7FD26BC42489D4F37BF3F821463B1A44BE28739 /t http://timestamp.verisign.com/scripts/timestamp.dll &quot;E:\CornerstoneRemoteControlClient\CornerstoneRemoteControlClient\obj\Release\CornerstoneRemoteControlClient.exe&quot;" />
+    <Exec Command="&quot;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Bin\signtool.exe&quot; sign /v /sha1 D7FD26BC42489D4F37BF3F821463B1A44BE28739 /t http://timestamp.verisign.com/scripts/timestamp.dll &quot;obj\Release\CornerstoneRemoteControlClient.exe&quot;" />
   </Target>
 </Project>
