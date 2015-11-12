@@ -22,6 +22,7 @@ namespace CornerstoneRemoteControlClient
             containerBuilder.RegisterType<RemoteControlDataViewModel>().AsSelf();
             containerBuilder.RegisterType<MessagesDataViewModel>().AsSelf();
             containerBuilder.RegisterType<FreeFormDataViewModel>().AsSelf();
+            containerBuilder.RegisterType<DataTrafficDataViewModel>().AsSelf();
             containerBuilder.RegisterType<DataViewsViewModel>().AsSelf().SingleInstance();
         }
     }

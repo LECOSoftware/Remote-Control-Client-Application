@@ -25,8 +25,8 @@
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
     <InstallUrl>http://lecoremotecontrolclient.codeplex.com/releases/clickonce/</InstallUrl>
-    <ApplicationRevision>7</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <ApplicationRevision>1</ApplicationRevision>
+    <ApplicationVersion>1.1.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
     <BootstrapperEnabled>true</BootstrapperEnabled>
@@ -115,6 +115,7 @@
     </ApplicationDefinition>
     <Compile Include="Communications\ReceivedDataStateObject.cs" />
     <Compile Include="Events\MessageDataEvent.cs" />
+    <Compile Include="Events\RecordDataTrafficEvent.cs" />
     <Compile Include="Helpers\NotBooleanToVisibilityConverter.cs" />
     <Compile Include="ViewModels\CommandViewModels\AddSamplesCommandViewModel.cs" />
     <Compile Include="ViewModels\AttributeParameter.cs" />
@@ -124,6 +125,7 @@
     <Compile Include="ViewModels\DataViewModels\CommandDataViewModel.cs" />
     <Compile Include="ViewModels\DataViewModels\ConnectionDataViewModel.cs" />
     <Compile Include="ViewModels\DataViewModel.cs" />
+    <Compile Include="ViewModels\DataViewModels\DataTrafficDataViewModel.cs" />
     <Compile Include="ViewModels\DataViewModels\DataViewsViewModel.cs" />
     <Compile Include="ViewModels\DataViewModels\FreeFormDataViewModel.cs" />
     <Compile Include="ViewModels\ErrorCodes.cs" />
@@ -162,6 +164,9 @@
     </Compile>
     <Compile Include="Views\DataViews\ConnectionDataView.xaml.cs">
       <DependentUpon>ConnectionDataView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\DataViews\DataTrafficDataView.xaml.cs">
+      <DependentUpon>DataTrafficDataView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\DataViews\FreeFormDataView.xaml.cs">
       <DependentUpon>FreeFormDataView.xaml</DependentUpon>
@@ -228,6 +233,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\ConnectionView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\DataViews\DataTrafficDataView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

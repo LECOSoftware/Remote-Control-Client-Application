@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Xml.Linq;
 using CornerstoneRemoteControlClient.Events;
+using CornerstoneRemoteControlClient.ViewModels.DataViewModels;
 
 namespace CornerstoneRemoteControlClient.Communications
 {
@@ -221,6 +222,8 @@ namespace CornerstoneRemoteControlClient.Communications
                     //Create a state object to hold onto the response.
                     stateObject = new ReceivedDataStateObject { Length = length };
 
+                    EventAggregatorContext.Current.GetEvent<RecordDataTrafficEvent>().Publish(new DataTrafficSentReceivedViewModel(_receiveBuffer, false, bytes));
+
                     //check if we have received more than 4 bytes. The 4 bytes contains the length of the following
                     //data. If we have received more than the 4 bytes, we need to add that to our buffer.
                     if (bytes > 4)
@@ -246,6 +249,8 @@ namespace CornerstoneRemoteControlClient.Communications
                     stateObject.Length -= bytes;
                     //Append the data to our running compilation.
                     stateObject.Data += Encoding.Unicode.GetString(_receiveBuffer, 0, bytes);
+
+                    EventAggregatorContext.Current.GetEvent<RecordDataTrafficEvent>().Publish(new DataTrafficSentReceivedViewModel(_receiveBuffer, false, bytes));
 
                     if (stateObject.Length > 0)
                     {
@@ -310,8 +315,11 @@ namespace CornerstoneRemoteControlClient.Communications
             {
                 if (_tcpClient != null && data != null)
                 {
-                    _tcpClient.GetStream().Write(BitConverter.GetBytes(data.Length), 0, 4);
+                    var lengthArray = BitConverter.GetBytes(data.Length);
+                    _tcpClient.GetStream().Write(lengthArray, 0, 4);
+                    EventAggregatorContext.Current.GetEvent<RecordDataTrafficEvent>().Publish(new DataTrafficSentReceivedViewModel(lengthArray, true));
                     _tcpClient.GetStream().Write(data, 0, data.Length);
+                    EventAggregatorContext.Current.GetEvent<RecordDataTrafficEvent>().Publish(new DataTrafficSentReceivedViewModel(data, true));
 
                     //stop and restart the heartbeat timer. We don't need to
                     //send the heartbeat if we have just recently sent some

@@ -42,6 +42,10 @@
             <dataViews:FreeFormDataView/>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type dataViewModels:DataTrafficDataViewModel}">
+            <dataViews:DataTrafficDataView/>
+        </DataTemplate>
+
         <Style x:Key="SpanningTabControlStyle" TargetType="{x:Type TabControl}">
             <Setter Property="Padding" Value="2"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
