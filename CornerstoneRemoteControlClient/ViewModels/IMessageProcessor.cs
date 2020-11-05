@@ -9,7 +9,7 @@ namespace CornerstoneRemoteControlClient.ViewModels
     /// </summary>
     public interface IMessageProcessor
     {
-        void ProcessResponse(XDocument response);
-        void TrafficOut(XDocument dataOut);
+        void ProcessResponse(object response);
+        void TrafficOut(string dataOut);
     }
 }

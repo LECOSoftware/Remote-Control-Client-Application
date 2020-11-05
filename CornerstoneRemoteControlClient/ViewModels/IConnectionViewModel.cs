@@ -2,6 +2,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Xml.Linq;
 
 namespace CornerstoneRemoteControlClient.ViewModels
 {
@@ -20,6 +21,18 @@ namespace CornerstoneRemoteControlClient.ViewModels
         Boolean CanLogOn { get; }
         Boolean CanLogOff { get; }
         Boolean InRemoteControlMode { get; }
+        Boolean IsTcpConnection { get; }
+        String HttpInstrumentRegistration { get; }
+        String HttpUser { get; }
+        String HttpPassword { get; }
+        String HttpLabName { get; }
+        String HttpLabKey { get; }
+        String HttpServer { get; }
+        String Family { get; }
+
+        String XmlFormattedUserAndLabInfo();
+        String GeneratePostData(string command = "");
+        void ProcessResponse(object response);
 
         event PropertyChangedEventHandler PropertyChanged;
     }

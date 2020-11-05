@@ -1,15 +1,18 @@
-﻿// Copyright © LECO Corporation 2013.  All Rights Reserved.
+﻿// Copyright © LECO Corporation 2013-2020.  All Rights Reserved.
 
 using System;
 using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Windows;
 using System.Xml.Linq;
 using CornerstoneRemoteControlClient.Communications;
 using CornerstoneRemoteControlClient.Events;
 using CornerstoneRemoteControlClient.Helpers;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace CornerstoneRemoteControlClient.ViewModels
 {
@@ -22,9 +25,15 @@ namespace CornerstoneRemoteControlClient.ViewModels
 
         #region Constructor
 
-        public ConnectionViewModel(ICommunicationEngine communicationEngine)
+        public ConnectionViewModel(ICommunicationEngine communicationEngine, IWebRequestor webRequestor, IHashCreator hashCreator)
         {
             _communicationEngine = communicationEngine;
+            _webRequestor = webRequestor;
+            _hashCreator = hashCreator;
+
+            //Give the communication engine a way to reference back to this instance.
+            if (_communicationEngine != null)
+                _communicationEngine.ParentConnectionViewModel = this;
 
             Traffic = new ObservableList<TrafficData>(Application.Current.Dispatcher);
 
@@ -39,6 +48,9 @@ namespace CornerstoneRemoteControlClient.ViewModels
             SupportedCultures = new ObservableList<LanguageElement>(Application.Current.Dispatcher);
             InstrumentInfo = new ObservableList<InstrumentInfoElement>(Application.Current.Dispatcher);
 
+            IsTcpConnection = true;
+            HttpServer = "remote.lecosoftware.com";
+
             //Initialize default connection parameters.
             Port = 12345;
             var address = Dns.GetHostAddresses(Dns.GetHostName()).FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork);
@@ -52,6 +64,7 @@ namespace CornerstoneRemoteControlClient.ViewModels
             DisconnectCommand = new RelayCommand(OnDisconnect);
             LogonCommand = new RelayCommand(OnLogon);
             LogoffCommand = new RelayCommand(OnLogoff);
+            GetInstrumentListCommand = new RelayCommand(OnGetInstrumentList);
 
             //We want to know if the app becomes disconnected so subscribe to diconnected event.
             EventAggregatorContext.Current.GetEvent<ClientDisconnectedEvent>().Subscribe(OnClientDisconnected);
@@ -64,13 +77,56 @@ namespace CornerstoneRemoteControlClient.ViewModels
 
         #region Public Interface
 
+        public bool UseUnicode16Encoding
+        {
+            get { return _communicationEngine.EncodingToUse.Equals(Encoding.Unicode); }
+            set
+            {
+                _communicationEngine.EncodingToUse = Encoding.Unicode;
+                RaisePropertyChanged("UseUnicode16Encoding");
+                RaisePropertyChanged("UseUnicode8Encoding");
+                RaisePropertyChanged("UseASCIIEncoding");
+            }
+        }
+
+        public bool UseUnicode8Encoding
+        {
+            get { return _communicationEngine.EncodingToUse.Equals(Encoding.UTF8); }
+            set
+            {
+                _communicationEngine.EncodingToUse = Encoding.UTF8;
+                RaisePropertyChanged("UseUnicode16Encoding");
+                RaisePropertyChanged("UseUnicode8Encoding");
+                RaisePropertyChanged("UseASCIIEncoding");
+            }
+        }
+
+        public bool UseASCIIEncoding
+        {
+            get { return _communicationEngine.EncodingToUse.Equals(Encoding.ASCII); }
+            set
+            {
+                _communicationEngine.EncodingToUse = Encoding.ASCII;
+                RaisePropertyChanged("UseUnicode16Encoding");
+                RaisePropertyChanged("UseUnicode8Encoding");
+                RaisePropertyChanged("UseASCIIEncoding");
+            }
+        }
+
+        public bool EncodingEnabled
+        {
+            //get { return !Connected; }
+            get { return true; }
+        }
+
         /// <summary>
         /// Called to process the response data that Cornerstone has sent in
         /// response to a command.
         /// </summary>
         /// <param name="response">Command response from Cornerstone.</param>
-        public override void ProcessResponse(XDocument response)
+        public override void ProcessResponse(object resp)
         {
+            var response = resp as XDocument;
             if (response != null && response.Root != null)
             {
                 AddTraffic("IN", response);
@@ -79,7 +135,7 @@ namespace CornerstoneRemoteControlClient.ViewModels
                 var commandId = String.Empty;
                 if (response.Root.Attribute("Cookie") != null)
                 {
-                    commandId = response.Root.Attribute("Cookie").Value;
+                    commandId = response.Root.Attribute("Cookie").Value.ToUpper();
                 }
 
                 //We used the commandId "LOGOFF" and "LOGON" to identify those
@@ -93,16 +149,40 @@ namespace CornerstoneRemoteControlClient.ViewModels
                 }
                 else if (commandId == "LOGON")
                 {
+                    var logonSuccessful = false;
                     //We got the response to the logon command. Make sure the logon succeeded.
-                    if (response.Root.Name.LocalName.ToUpper() == "OK")
+                    if (IsLogonSuccessful(response.Root))
                     {
+                        var errorCodeElement = response.Root.Element("ErrorCode");
+                        if (errorCodeElement != null)
+                        {
+                            int errorCode;
+                            if (int.TryParse(errorCodeElement.Value, out errorCode))
+                            {
+                                if (errorCode == 0)
+                                {
+                                    logonSuccessful = true;
+
+                                    //Successful logon
+                                    LoggedOn = true;
+                                    LogOnResult = String.Empty;
+
+                                    EventAggregatorContext.Current.GetEvent<SendDataEvent>().Publish(new SendDataEventArgs(_inRemoteControlModeDocument.ToString(), this));
+                                }
+                            }
+                        }
+
+                        logonSuccessful = true;
+
                         //Successful logon
                         LoggedOn = true;
                         LogOnResult = String.Empty;
 
-                        EventAggregatorContext.Current.GetEvent<SendDataEvent>().Publish(new SendDataEventArgs(_inRemoteControlModeDocument, this));
+                        EventAggregatorContext.Current.GetEvent<SendDataEvent>().Publish(new SendDataEventArgs(_inRemoteControlModeDocument.ToString(), this));
                     }
-                    else
+
+
+                    if(!logonSuccessful)
                     {
                         //Logon was not successful.
                         LoggedOn = false;
@@ -140,9 +220,59 @@ namespace CornerstoneRemoteControlClient.ViewModels
             }
         }
 
+        /// <summary>
+        /// Creates the XML document that will be added to the POST data of the
+        /// HTTP command sent to the instrument.
+        /// </summary>
+        /// <returns>XML document as string.</returns>
+        public string XmlFormattedUserAndLabInfo()
+        {
+            var xml = new XElement("UserLabInfo");
+            xml.Add(new XElement("user", HttpUser));
+            xml.Add(new XElement("pwd", _hashCreator.CreateHash(HttpPassword)));
+            xml.Add(new XElement("labname", HttpLabName));
+            xml.Add(new XElement("labkey", HttpLabKey));
+
+            return new XDocument(xml).ToString();
+        }
+
+        /// <summary>
+        /// Creates the XML document that will be added to the POST data of the 
+        /// HTTP command sent to the instrument.
+        /// </summary>
+        /// <param name="command">XML formatted command to execute.</param>
+        /// <returns>XML document as a string.</returns>
+        public string GeneratePostData(string command = "")
+        {
+            if (string.IsNullOrEmpty(command))
+                return XmlFormattedUserAndLabInfo();
+            else
+            {
+                var doc = XDocument.Parse(XmlFormattedUserAndLabInfo());
+                var commandElement = new XElement("Command");
+                doc.Root.Add(commandElement);
+                var internalCommandElement = XElement.Parse(command);
+                commandElement.Add(internalCommandElement);
+
+                return doc.ToString();
+            }
+        }
+
         #endregion
 
         #region RelayCommand Handlers
+
+        /// <summary>
+        /// Retrieve the list of instruments that match the HTTP connection settings.
+        /// </summary>
+        private async void OnGetInstrumentList()
+        {
+            var instrumentData = await GetInstruments();
+            if(instrumentData != null)
+            {
+                AddTraffic("IN", instrumentData);
+            }
+        }
 
         /// <summary>
         /// We are being asked to disconnect from Cornerstone.
@@ -179,7 +309,7 @@ namespace CornerstoneRemoteControlClient.ViewModels
         {
             if (!LoggedOn)
             {
-                EventAggregatorContext.Current.GetEvent<SendDataEvent>().Publish(new SendDataEventArgs(CreateLogonDocument(), this, "LOGON"));
+                EventAggregatorContext.Current.GetEvent<SendDataEvent>().Publish(new SendDataEventArgs(CreateLogonDocument().ToString(), this, "LOGON"));
             }
         }
 
@@ -190,7 +320,7 @@ namespace CornerstoneRemoteControlClient.ViewModels
         {
             if (LoggedOn)
             {
-                EventAggregatorContext.Current.GetEvent<SendDataEvent>().Publish(new SendDataEventArgs(_logoffCommandDocument, this, "LOGOFF"));
+                EventAggregatorContext.Current.GetEvent<SendDataEvent>().Publish(new SendDataEventArgs(_logoffCommandDocument.ToString(), this, "LOGOFF"));
             }
         }
 
@@ -231,9 +361,9 @@ namespace CornerstoneRemoteControlClient.ViewModels
                     //We have become connected, so send a to get general information about
                     //the instrument we have connected to. These commands can be executed without
                     //first executing a Logon command.
-                    SendData(new SendDataEventArgs(_versionCommandDocument, this));
-                    SendData(new SendDataEventArgs(_supportedCulturesCommandDocument, this));
-                    SendData(new SendDataEventArgs(_instrumentInfoCommandDocument, this));
+                    SendData(new SendDataEventArgs(_versionCommandDocument.ToString(), this));
+                    SendData(new SendDataEventArgs(_supportedCulturesCommandDocument.ToString(), this));
+                    SendData(new SendDataEventArgs(_instrumentInfoCommandDocument.ToString(), this));
                 }
                 else
                 {
@@ -242,6 +372,7 @@ namespace CornerstoneRemoteControlClient.ViewModels
                     ProtocolVersion = String.Empty;
                     SelectedLanguage = null;
                     Options = String.Empty;
+                    Family = string.Empty;
 
                     using (SupportedCultures.AcquireLock())
                     {
@@ -331,6 +462,9 @@ namespace CornerstoneRemoteControlClient.ViewModels
             InRemoteControlMode = Convert.ToBoolean(remoteControlStateResponse.Value);
         }
 
+        private XAttribute FindAttribute(XElement element, string name) => element.Attributes().Where(o => string.Compare(o.Name.LocalName, name, true) == 0).Single();
+        private IEnumerable<XElement> FindElements(XElement element, string name) => element.Elements().Where(o => string.Compare(o.Name.LocalName, name, true) == 0);
+
         /// <summary>
         /// Processes the response to the InstrumentInfo command.
         /// </summary>
@@ -347,13 +481,18 @@ namespace CornerstoneRemoteControlClient.ViewModels
             {
                 InstrumentInfo.Clear();
 
-                foreach (var fieldElement in instrumentInfoResponse.Elements("field"))
+                foreach (var fieldElement in instrumentInfoResponse.Elements("field", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    InstrumentInfo.Add(new InstrumentInfoElement(fieldElement.Attribute("label").Value, fieldElement.Value));
+                    var label = FindAttribute(fieldElement, "Label").Value;
+                    InstrumentInfo.Add(new InstrumentInfoElement(label, fieldElement.Value));
 
-                    if (fieldElement.Attribute("label").Value == "Options")
+                    if (string.Compare(label, "Options", true) == 0)
                     {
                         Options = fieldElement.Value;
+                    }
+                    else if (string.Compare(label, "Family", true) == 0)
+                    {
+                        Family = fieldElement.Value;
                     }
                 }
             }
@@ -362,6 +501,35 @@ namespace CornerstoneRemoteControlClient.ViewModels
         #endregion
 
         #region Private Methods
+
+        /// <summary>
+        /// Performs HTTP request to retrieve list of registered instruments.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<XDocument> GetInstruments()
+        {
+            XDocument returnData = null;
+            await Task.Run(async () =>
+            {
+                var responseDocument = await _webRequestor.MakeRequest(_webRequestor.CreateUri("RegisteredInstruments.aspx", null, HttpServer), XmlFormattedUserAndLabInfo());
+                returnData = responseDocument;
+            });
+
+            return returnData;
+        }
+
+        private void AddTraffic(String direction, String data)
+        {
+            using (Traffic.AcquireLock())
+            {
+                var trafficData = new TrafficData(direction, data);
+
+                if (Traffic.Count == 100)
+                    Traffic.RemoveAt(0);
+
+                Traffic.Add(trafficData);
+            }
+        }
 
         private void AddTraffic(String direction, XDocument data)
         {
@@ -376,7 +544,7 @@ namespace CornerstoneRemoteControlClient.ViewModels
             }
         }
 
-        public override void TrafficOut(XDocument dataOut)
+        public override void TrafficOut(string dataOut)
         {
             AddTraffic("OUT", dataOut);
         }
@@ -433,11 +601,116 @@ namespace CornerstoneRemoteControlClient.ViewModels
         public RelayCommand DisconnectCommand { get; private set; }
         public RelayCommand LogonCommand { get; private set; }
         public RelayCommand LogoffCommand { get; private set; }
+        public RelayCommand GetInstrumentListCommand { get; private set; }
 
         //Collections for view binding.
         public ObservableList<LanguageElement> SupportedCultures { get; private set; }
         public ObservableList<InstrumentInfoElement> InstrumentInfo { get; private set; }
-        public ObservableList<TrafficData> Traffic { get; private set; } 
+        public ObservableList<TrafficData> Traffic { get; private set; }
+
+        /// <summary>
+        /// Indicates if the desired connection type is direct TCP connection. If this
+        /// is false, HTTP connection is assumed.
+        /// </summary>
+        private bool _isTcpConnection;
+        public bool IsTcpConnection
+        {
+            get { return _isTcpConnection; }
+            set
+            {
+                _isTcpConnection = value;
+                RaisePropertyChanged("IsTcpConnection");
+
+                if(!_isTcpConnection)
+                {
+                    OnDisconnect();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Contains the registration ID for the instrument to send HTTP commands to.
+        /// </summary>
+        private string _httpInstrumentRegistration;
+        public string HttpInstrumentRegistration
+        {
+            get { return _httpInstrumentRegistration; }
+            set
+            {
+                _httpInstrumentRegistration = value;
+                RaisePropertyChanged("HttpInstrumentRegistration");
+            }
+        }
+
+        /// <summary>
+        /// HTTP communication user name.
+        /// </summary>
+        private string _httpUser;
+        public string HttpUser
+        {
+            get { return _httpUser; }
+            set
+            {
+                _httpUser = value;
+                RaisePropertyChanged("HttpUser");
+            }
+        }
+
+        /// <summary>
+        /// HTTP communication password.
+        /// </summary>
+        private string _httpPassword;
+        public string HttpPassword
+        {
+            get { return _httpPassword; }
+            set
+            {
+                _httpPassword = value;
+                RaisePropertyChanged("HttpPassword");
+            }
+        }
+
+        /// <summary>
+        /// HTTP communication lab name.
+        /// </summary>
+        private string _httpLabName;
+        public string HttpLabName
+        {
+            get { return _httpLabName; }
+            set
+            {
+                _httpLabName = value;
+                RaisePropertyChanged("HttpLabName");
+            }
+        }
+
+        /// <summary>
+        /// HTTP communication lab key.
+        /// </summary>
+        private string _httpLabKey;
+        public string HttpLabKey
+        {
+            get { return _httpLabKey; }
+            set
+            {
+                _httpLabKey = value;
+                RaisePropertyChanged("HttpLabKey");
+            }
+        }
+
+        /// <summary>
+        /// HTTP communication server. Default value is remote.lecosoftware.com.
+        /// </summary>
+        private string _httpServer;
+        public string HttpServer
+        {
+            get { return _httpServer; }
+            set
+            {
+                _httpServer = value;
+                RaisePropertyChanged("HttpServer");
+            }
+        }
 
         /// <summary>
         /// Language in which we would like Cornerstone to reply.
@@ -473,6 +746,7 @@ namespace CornerstoneRemoteControlClient.ViewModels
                 RaisePropertyChanged("LoggedOn");
                 RaisePropertyChanged("CanLogOn");
                 RaisePropertyChanged("CanLogOff");
+                RaisePropertyChanged("EncodingEnabled");
             }
         }
 
@@ -664,13 +938,23 @@ namespace CornerstoneRemoteControlClient.ViewModels
         /// <summary>
         /// Version of remote API of connected Cornerstone instrument.
         /// </summary>
+        private Version _cornerstoneProtocolVersion = new Version();
         private String _protocolVersion;
         public String ProtocolVersion
         {
             get { return _protocolVersion; }
             set
             {
-                _protocolVersion = value;
+                try
+                {
+                    _protocolVersion = value;
+                    _cornerstoneProtocolVersion = new Version(_protocolVersion);
+                }
+                catch (Exception)
+                {
+                    _protocolVersion = "1.0";
+                    _cornerstoneProtocolVersion = new Version(_protocolVersion);
+                }
                 RaisePropertyChanged("ProtocolVersion");
             }
         }
@@ -703,11 +987,39 @@ namespace CornerstoneRemoteControlClient.ViewModels
             }
         }
 
+        private string _family;
+
+        public string Family
+        {
+            get => _family;
+            set
+            {
+                _family = value;
+                RaisePropertyChanged(nameof(Family));
+            }
+        }
+
         #endregion
+
+        private static string GetAttributeOrElementValue(XElement element, string name) =>
+              element.Attribute(name, StringComparison.InvariantCultureIgnoreCase)?.Value ?? element.Elements(name, StringComparison.InvariantCultureIgnoreCase).FirstOrDefault()?.Value;
+
+        private static bool IsLogonSuccessful(XElement element)
+        {
+            if (element.Name.LocalName.Equals("Ok", StringComparison.InvariantCultureIgnoreCase))   // Classic response
+                return true;
+            if (!element.Name.LocalName.Equals("Logon", StringComparison.InvariantCultureIgnoreCase))   // 2.9.x and later
+                return false;
+            // 2.9.x sends result as an XML element.  3.1.x sends as an attribute
+            var errorCodeText = GetAttributeOrElementValue(element, "ErrorCode");
+            return (errorCodeText != null) && int.TryParse(errorCodeText, out var errorCode) && (errorCode == 0);
+        }
 
         #region Private Members
 
         private readonly ICommunicationEngine _communicationEngine;
+        private readonly IHashCreator _hashCreator;
+        private readonly IWebRequestor _webRequestor;
         private readonly XDocument _versionCommandDocument;
         private readonly XDocument _supportedCulturesCommandDocument;
         private readonly XDocument _instrumentInfoCommandDocument;
@@ -715,5 +1027,17 @@ namespace CornerstoneRemoteControlClient.ViewModels
         private readonly XDocument _inRemoteControlModeDocument;
 
         #endregion
+    }
+
+    internal static class XElementExtension
+    {
+        public static IEnumerable<XElement> Elements(this XElement element, XName name, StringComparison comparison) =>
+        element.Elements().Where(o => IsEqual(o.Name, name, comparison));
+
+        public static XAttribute Attribute(this XElement element, XName name, StringComparison comparison) =>
+        element.Attributes().FirstOrDefault(o => IsEqual(o.Name, name, comparison));
+
+        private static bool IsEqual(XName name1, XName name2, StringComparison comparison) =>
+        name1.NamespaceName.Equals(name2.NamespaceName, comparison) && name1.LocalName.Equals(name2.LocalName, comparison);
     }
 }

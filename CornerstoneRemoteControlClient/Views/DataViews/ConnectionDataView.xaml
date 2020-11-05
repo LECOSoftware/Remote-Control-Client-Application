@@ -8,165 +8,246 @@
              xmlns:helpers="clr-namespace:CornerstoneRemoteControlClient.Helpers"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
-    <Grid Margin="15,5">
-        
+
+    <UserControl.Resources>
+        <helpers:NotBooleanToVisibilityConverter x:Key="notBooleanToVisibilityConverter"/>
+        <helpers:InverseBooleanConverter x:Key="invBooleanConverter"/>
+    </UserControl.Resources>
+
+    <Grid>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="250"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0">
-
-            <TextBlock Style="{StaticResource HeaderText16}" Margin="0,10,0,10">
-                In order to access the Cornerstone remote capabilites, a connection must be established on the port on which Cornerstone is listening. The default port value is 12345, however, this can
-                be changed within Cornerstone. Data sent over this connection to and from Cornerstone is in the form of XML. Each message is prepended with an integer value containing the number of bytes
-                making up the message payload.
-            </TextBlock>
-            
-            <TextBlock Text="{Binding ConnectionText}" Style="{StaticResource HeaderText16}" Margin="0,10,0,10"/>
-
+        <StackPanel Orientation="Horizontal" Grid.Row="0" >
+            <TextBlock Text="Connection Type: " Margin="5"/>
+            <RadioButton Content="Direct TCP" VerticalAlignment="Bottom" IsChecked="{Binding ConnectionViewModel.IsTcpConnection}" Margin="5"/>
+            <RadioButton Content="HTTP" VerticalAlignment="Bottom" IsChecked="{Binding ConnectionViewModel.IsTcpConnection, Converter={StaticResource invBooleanConverter}}" Margin="5"/>
         </StackPanel>
 
-        <ScrollViewer Grid.Row="2" Background="Black" Margin="0,10" VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding ConnectionViewModel.Traffic.ObservableCollection}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <TextBox IsReadOnly="True" BorderThickness="0" Text="{Binding Data, Mode=OneWay}" Style="{StaticResource TrafficStyle}">
-                        </TextBox>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
 
-        <Grid Grid.Row="1"> 
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width=".30*"/>
-                <ColumnDefinition Width="2"/>
-                <ColumnDefinition Width=".40*"/>
-                <ColumnDefinition Width="2"/>
-                <ColumnDefinition Width=".30*"/>
-            </Grid.ColumnDefinitions>
-
-            <Border CornerRadius="10" Background="Bisque" Grid.ColumnSpan="5" BorderBrush="DarkGray" BorderThickness="1"></Border>
-            <Grid Grid.Column="0">
+        <Grid Grid.Row="1" Margin="15,5" Visibility="{Binding ConnectionViewModel.IsTcpConnection, Converter={StaticResource notBooleanToVisibilityConverter}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Border CornerRadius="10" Background="Bisque" BorderBrush="DarkGray" BorderThickness="1"></Border>
+            <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width=".65*"/>
-                    <ColumnDefinition Width=".35*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <Grid.RowDefinitions>
-                    <RowDefinition/>
-                    <RowDefinition Height="2"/>
-                    <RowDefinition/>
-                    <RowDefinition Height="20"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- IP Address and Port controls -->
-                <Grid VerticalAlignment="Center" Grid.Column="0" Grid.Row="0" Margin="5,0,5,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+                <TextBlock Text="User Name:" Grid.Column="0" Grid.Row="0" Margin="5" Style="{StaticResource HeaderText16}"/>
+                <TextBlock Text="Password:" Grid.Column="0" Grid.Row="1" Margin="5" Style="{StaticResource HeaderText16}"/>
+                <TextBlock Text="Lab Name:" Grid.Column="0" Grid.Row="2" Margin="5" Style="{StaticResource HeaderText16}"/>
+                <TextBlock Text="Lab Key:" Grid.Column="0" Grid.Row="3" Margin="5" Style="{StaticResource HeaderText16}"/>
+                <TextBlock Text="Server URL (https://):" Grid.Column="0" Grid.Row="4" Margin="5" Style="{StaticResource HeaderText16}"/>
+                <TextBlock Text="Instrument Registration ID:" Grid.Column="0" Grid.Row="5" Margin="5" Style="{StaticResource HeaderText16}"/>
 
-                    <TextBlock Grid.Column="0" Grid.Row="0" Text="IP Address:" Margin="2,1" HorizontalAlignment="Right"/>
-                    <TextBlock Grid.Column="0" Grid.Row="1" Text="Port:" Margin="2,1" HorizontalAlignment="Right"/>
+                <TextBox Text="{Binding ConnectionViewModel.HttpUser, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" Grid.Row="0" Margin="5" Width="250"/>
+                <TextBox Text="{Binding ConnectionViewModel.HttpPassword, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" Grid.Row="1" Margin="5" Width="250"/>
+                <TextBox Text="{Binding ConnectionViewModel.HttpLabName, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" Grid.Row="2" Margin="5" Width="250"/>
+                <TextBox Text="{Binding ConnectionViewModel.HttpLabKey, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" Grid.Row="3" Margin="5" Width="250"/>
+                <TextBox Text="{Binding ConnectionViewModel.HttpServer, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" Grid.Row="4" Margin="5" Width="250"/>
+                <TextBox Text="{Binding ConnectionViewModel.HttpInstrumentRegistration, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" Grid.Row="5" Margin="5" Width="250"/>
 
-                    <TextBox Grid.Column="1" Grid.Row="0" Text="{Binding ConnectionViewModel.IpAddress}" Margin="0,2,0,1"/>
-                    <TextBox Grid.Column="1" Grid.Row="1" Text="{Binding ConnectionViewModel.Port}" Margin="0,2,0,1"/>
-                </Grid>
-
-                <!-- Connect/Disconnect controls -->
-                <StackPanel Grid.Column="1" Grid.Row="0" VerticalAlignment="Center">
-                    <Button Content="Connect" Command="{Binding ConnectionViewModel.ConnectCommand}" Height="20" Width="85" Margin="5" IsEnabled="{Binding ConnectionViewModel.Connected, Converter={helpers:InverseBooleanConverter}}"/>
-                    <Button Content="Disconnect" Command="{Binding ConnectionViewModel.DisconnectCommand}" Height="20" Width="85" Margin="5" IsEnabled="{Binding ConnectionViewModel.Connected}"/>
-                </StackPanel>
-
-                <Rectangle Fill="DarkGray" Grid.Row="1" Grid.ColumnSpan="2"/>
-
-                <!-- Logon/off controls -->
-                <Grid VerticalAlignment="Center" Grid.Column="0" Grid.Row="2" Margin="5,0,5,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Column="0" Grid.Row="0" Text="Cornerstone User Name:" Margin="2" HorizontalAlignment="Right"/>
-                    <TextBlock Grid.Column="0" Grid.Row="1" Text="Password:" Margin="2" HorizontalAlignment="Right"/>
-
-                    <TextBox Grid.Column="1" Grid.Row="0" Text="{Binding ConnectionViewModel.Username}" Margin="0,2"/>
-                    <TextBox Grid.Column="1" Grid.Row="1" Text="{Binding ConnectionViewModel.Password}" Margin="0,2"/>
-                </Grid>
-
-                <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="3" Text="{Binding ConnectionViewModel.LogOnResult}" Margin="7,2" Style="{StaticResource ErrorText}"/>
-
-                <StackPanel Grid.Column="1" Grid.Row="2" VerticalAlignment="Center">
-                    <Button Content="Log On" Command="{Binding ConnectionViewModel.LogonCommand}" Height="20" Width="85" Margin="5" IsEnabled="{Binding ConnectionViewModel.CanLogOn}"/>
-                    <Button Content="Log Off" Command="{Binding ConnectionViewModel.LogoffCommand}" Height="20" Width="85" Margin="5" IsEnabled="{Binding ConnectionViewModel.CanLogOff}"/>
-                </StackPanel>
+                <Button Content="Get List of Instruments" Command="{Binding ConnectionViewModel.GetInstrumentListCommand}" Margin="5" Grid.Column="2" Grid.Row="5" Width="250"/>
 
             </Grid>
+            
+            <ScrollViewer Grid.Row="1" Background="Black" Margin="0,10" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding ConnectionViewModel.Traffic.ObservableCollection}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBox IsReadOnly="True" BorderThickness="0" Text="{Binding Data, Mode=OneWay}" Style="{StaticResource TrafficStyle}">
+                            </TextBox>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
 
-            <!-- Instrument Info controls -->
-            <DockPanel Grid.Column="2" Grid.Row="0" Margin="5">
-                <TextBlock Text="Connected Instrument Information:" DockPanel.Dock="Top" Style="{StaticResource HeaderText}"/>
-                <ScrollViewer Margin="0,2,0,0" VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding ConnectionViewModel.InstrumentInfo.ObservableCollection}" HorizontalContentAlignment="Stretch">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width=".4*"/>
-                                        <ColumnDefinition Width=".6*"/>
-                                    </Grid.ColumnDefinitions>
+        <Grid Grid.Row="1" Margin="15,5" Visibility="{Binding ConnectionViewModel.IsTcpConnection, Converter={StaticResource BoolToVisibility}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="250"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                                    <TextBlock Text="{Binding Name}" TextAlignment="Left" Grid.Column="0"/>
-                                    <TextBlock Text="{Binding Value}" TextAlignment="Left" Grid.Column="1" TextWrapping="Wrap"/>
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </DockPanel>
+            <StackPanel Grid.Row="0">
 
-            <!-- Supported Languages controls -->
-            <DockPanel Grid.Column="4" Grid.Row="0" Margin="5">
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
-                    <TextBlock Text="Supported Cultures:" Style="{StaticResource HeaderText}"/>
-                    <TextBlock Text="{Binding ConnectionViewModel.SelectedLanguage.Key}" Margin="5,0,2,0"/>
-                    <TextBlock Text="{Binding ConnectionViewModel.SelectedLanguage.Name}" Margin="2,0"/>
-                </StackPanel>
-                <ScrollViewer Margin="0,2,0,0" VerticalScrollBarVisibility="Auto">
-                    <ListBox ItemsSource="{Binding ConnectionViewModel.SupportedCultures.ObservableCollection}" SelectedItem="{Binding ConnectionViewModel.SelectedLanguage, Mode=TwoWay}" HorizontalContentAlignment="Stretch">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width=".4*"/>
-                                        <ColumnDefinition Width=".6*"/>
-                                    </Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource HeaderText16}" Margin="0,10,0,10">
+                In order to access the Cornerstone remote capabilites, a connection must be established on the port on which Cornerstone is listening. The default port value is 12345, however, this can
+                be changed within Cornerstone. Data sent over this connection to and from Cornerstone is in the form of XML. Each message is prepended with an integer value containing the number of bytes
+                making up the message payload.
+                </TextBlock>
 
-                                    <TextBlock Text="{Binding Key}" TextAlignment="Left" Grid.Column="0"/>
-                                    <TextBlock Text="{Binding Name}" TextAlignment="Left" Grid.Column="1" TextWrapping="Wrap"/>
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </ScrollViewer>
-            </DockPanel>
+                <TextBlock Text="{Binding ConnectionText}" Style="{StaticResource HeaderText16}" Margin="0,10,0,10"/>
 
-            <!-- Separators -->
-            <Rectangle Fill="DarkGray" Grid.Column="1" Grid.RowSpan="2"/>
-            <Rectangle Fill="DarkGray" Grid.Column="3" Grid.RowSpan="2"/>
+            </StackPanel>
 
+            <ScrollViewer Grid.Row="2" Background="Black" Margin="0,10" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding ConnectionViewModel.Traffic.ObservableCollection}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBox IsReadOnly="True" BorderThickness="0" Text="{Binding Data, Mode=OneWay}" Style="{StaticResource TrafficStyle}">
+                            </TextBox>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width=".30*"/>
+                    <ColumnDefinition Width="2"/>
+                    <ColumnDefinition Width=".40*"/>
+                    <ColumnDefinition Width="2"/>
+                    <ColumnDefinition Width=".30*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border CornerRadius="10" Background="Bisque" Grid.ColumnSpan="5" BorderBrush="DarkGray" BorderThickness="1"></Border>
+                <Grid Grid.Column="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width=".65*"/>
+                        <ColumnDefinition Width=".35*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition Height="2"/>
+                        <RowDefinition/>
+                        <RowDefinition Height="20"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- IP Address and Port controls -->
+                    <Grid VerticalAlignment="Center" Grid.Column="0" Grid.Row="0" Margin="5,0,5,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
+                            <TextBlock Text="Encoding: " Margin="5"/>
+                            <RadioButton Content="UTF-16" VerticalAlignment="Bottom" IsEnabled="{Binding ConnectionViewModel.EncodingEnabled}" IsChecked="{Binding ConnectionViewModel.UseUnicode16Encoding}" Margin="5"/>
+                            <RadioButton Content="UTF-8" VerticalAlignment="Bottom" IsEnabled="{Binding ConnectionViewModel.EncodingEnabled}" IsChecked="{Binding ConnectionViewModel.UseUnicode8Encoding}" Margin="5"/>
+                            <RadioButton Content="ASCII" VerticalAlignment="Bottom" IsEnabled="{Binding ConnectionViewModel.EncodingEnabled}" IsChecked="{Binding ConnectionViewModel.UseASCIIEncoding}" Margin="5"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Column="0" Grid.Row="1" Text="IP Address:" Margin="2,1" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="0" Grid.Row="2" Text="Port:" Margin="2,1" HorizontalAlignment="Right"/>
+
+                        <TextBox Grid.Column="1" Grid.Row="1" Text="{Binding ConnectionViewModel.IpAddress}" Margin="0,2,0,1"/>
+                        <TextBox Grid.Column="1" Grid.Row="2" Text="{Binding ConnectionViewModel.Port}" Margin="0,2,0,1"/>
+                    </Grid>
+
+                    <!-- Connect/Disconnect controls -->
+                    <StackPanel Grid.Column="1" Grid.Row="0" VerticalAlignment="Center">
+                        <Button Content="Connect" Command="{Binding ConnectionViewModel.ConnectCommand}" Height="20" Width="85" Margin="5" IsEnabled="{Binding ConnectionViewModel.Connected, Converter={helpers:InverseBooleanConverter}}"/>
+                        <Button Content="Disconnect" Command="{Binding ConnectionViewModel.DisconnectCommand}" Height="20" Width="85" Margin="5" IsEnabled="{Binding ConnectionViewModel.Connected}"/>
+                    </StackPanel>
+
+                    <Rectangle Fill="DarkGray" Grid.Row="1" Grid.ColumnSpan="2"/>
+
+                    <!-- Logon/off controls -->
+                    <Grid VerticalAlignment="Center" Grid.Column="0" Grid.Row="2" Margin="5,0,5,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Column="0" Grid.Row="0" Text="Cornerstone User Name:" Margin="2" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="0" Grid.Row="1" Text="Password:" Margin="2" HorizontalAlignment="Right"/>
+
+                        <TextBox Grid.Column="1" Grid.Row="0" Text="{Binding ConnectionViewModel.Username}" Margin="0,2"/>
+                        <TextBox Grid.Column="1" Grid.Row="1" Text="{Binding ConnectionViewModel.Password}" Margin="0,2"/>
+                    </Grid>
+
+                    <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="3" Text="{Binding ConnectionViewModel.LogOnResult}" Margin="7,2" Style="{StaticResource ErrorText}"/>
+
+                    <StackPanel Grid.Column="1" Grid.Row="2" VerticalAlignment="Center">
+                        <Button Content="Log On" Command="{Binding ConnectionViewModel.LogonCommand}" Height="20" Width="85" Margin="5" IsEnabled="{Binding ConnectionViewModel.CanLogOn}"/>
+                        <Button Content="Log Off" Command="{Binding ConnectionViewModel.LogoffCommand}" Height="20" Width="85" Margin="5" IsEnabled="{Binding ConnectionViewModel.CanLogOff}"/>
+                    </StackPanel>
+
+                </Grid>
+
+                <!-- Instrument Info controls -->
+                <DockPanel Grid.Column="2" Grid.Row="0" Margin="5">
+                    <TextBlock Text="Connected Instrument Information:" DockPanel.Dock="Top" Style="{StaticResource HeaderText}"/>
+                    <ScrollViewer Margin="0,2,0,0" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding ConnectionViewModel.InstrumentInfo.ObservableCollection}" HorizontalContentAlignment="Stretch">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width=".4*"/>
+                                            <ColumnDefinition Width=".6*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="{Binding Name}" TextAlignment="Left" Grid.Column="0"/>
+                                        <TextBlock Text="{Binding Value}" TextAlignment="Left" Grid.Column="1" TextWrapping="Wrap"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+
+                <!-- Supported Languages controls -->
+                <DockPanel Grid.Column="4" Grid.Row="0" Margin="5">
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
+                        <TextBlock Text="Supported Cultures:" Style="{StaticResource HeaderText}"/>
+                        <TextBlock Text="{Binding ConnectionViewModel.SelectedLanguage.Key}" Margin="5,0,2,0"/>
+                        <TextBlock Text="{Binding ConnectionViewModel.SelectedLanguage.Name}" Margin="2,0"/>
+                    </StackPanel>
+                    <ScrollViewer Margin="0,2,0,0" VerticalScrollBarVisibility="Auto">
+                        <ListBox ItemsSource="{Binding ConnectionViewModel.SupportedCultures.ObservableCollection}" SelectedItem="{Binding ConnectionViewModel.SelectedLanguage, Mode=TwoWay}" HorizontalContentAlignment="Stretch">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width=".4*"/>
+                                            <ColumnDefinition Width=".6*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="{Binding Key}" TextAlignment="Left" Grid.Column="0"/>
+                                        <TextBlock Text="{Binding Name}" TextAlignment="Left" Grid.Column="1" TextWrapping="Wrap"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </ScrollViewer>
+                </DockPanel>
+
+                <!-- Separators -->
+                <Rectangle Fill="DarkGray" Grid.Column="1" Grid.RowSpan="2"/>
+                <Rectangle Fill="DarkGray" Grid.Column="3" Grid.RowSpan="2"/>
+
+            </Grid>
         </Grid>
     </Grid>
+    
 </UserControl>

@@ -1,6 +1,7 @@
 ﻿// Copyright © LECO Corporation 2013.  All Rights Reserved.
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using CornerstoneRemoteControlClient.ViewModels.CommandViewModels;
 
@@ -29,27 +30,175 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
             base.ConnectionViewModelPropertyChanged(sender, e);
 
             SetupAvailability();
+
+            SetupCommandsForFamily();
         }
 
         private void SetupAvailability()
         {
-            if (ConnectionViewModel.Connected)
+            if(ConnectionViewModel.IsTcpConnection)
             {
-                if (ConnectionViewModel.LoggedOn)
+                if (ConnectionViewModel.Connected)
                 {
-                    if (CommandsEnabled)
-                        AvailabilityText = "The connected instrument supports Remote Query commands.";
+                    if (ConnectionViewModel.LoggedOn)
+                    {
+                        if (CommandsEnabled)
+                            AvailabilityText = "The connected instrument supports Remote Query commands.";
+                        else
+                            AvailabilityText = "The connected instrument does not support Remote Query commands.";
+                    }
                     else
-                        AvailabilityText = "The connected instrument does not support Remote Query commands.";
+                    {
+                        AvailabilityText = "In order to execute Remote Query commands use the log on controls to specify a valid user.";
+                    }
                 }
                 else
                 {
-                    AvailabilityText = "In order to execute Remote Query commands use the log on controls to specify a valid user.";
+                    AvailabilityText = "In order to execute Remote Query commands use the connection controls to establish a connection to a Cornerstone instrument.";
                 }
             }
             else
             {
-                AvailabilityText = "In order to execute Remote Query commands use the connection controls to establish a connection to a Cornerstone instrument.";
+                if (!String.IsNullOrEmpty(ConnectionViewModel.HttpInstrumentRegistration) &&
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpLabKey) &&
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpLabName) &&
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpPassword) &&
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpUser) &&
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpServer))
+                {
+                    AvailabilityText = String.Empty;
+                }
+                else
+                {
+                    AvailabilityText = "In order to execute Remote Query commands, enter values for user, password, lab name, lab key and instrument registration on the Connection tab.";
+                }
+            }
+        }
+
+        private void SetupCommandsForFamily()
+        {
+            if (ConnectionViewModel.Connected)
+            {
+                RemoveProductSpecificCommands();
+                SetupProductSpecificCommands();
+            }
+            else
+            {
+                RemoveProductSpecificCommands();
+            }
+        }
+
+        private void RemoveProductSpecificCommands()
+        {
+            using (Commands.AcquireLock())
+            {
+                var commandsToRemove = new List<RemoteCommandViewModel>();
+
+                foreach (var command in Commands)
+                {
+                    if (!string.IsNullOrEmpty(command.RequiredFamily))
+                    {
+                        commandsToRemove.Add(command);
+                    }
+                }
+
+                foreach (var commandToRemove in commandsToRemove)
+                {
+                    Commands.Remove(commandToRemove);
+                }
+            }
+        }
+
+        private void SetupProductSpecificCommands()
+        {
+            var family = ConnectionViewModel.Family;
+
+            if (family == "InorganicGds")
+            {
+                using (Commands.AcquireLock())
+                {
+                    {
+                        var name = "StandardsForElements";
+                        var description = "Retrieves the list of standards for the specified usage.";
+                        var command = new AttributeParameteredCommandViewModel(name, description)
+                        {
+                            RequiredFamily = family
+                        };
+                        command.AddParameter("MethodKey", "The unique key that identifies the specific method. Leading zeros may be omitted.", "0");
+                        command.AddParameter("Usage", "Check/Calibration/Drift.", "0");
+                        Commands.Add(command);
+                    }
+                    {
+                        var name = "StandardManufacturers";
+                        var description = "Retrieves list of standard manufacturers.";
+                        var command = new ParameterlessCommandViewModel(name, description) {RequiredFamily = family};
+                        Commands.Add(command);
+                    }
+                    {
+                        var name = "StandardsForManufacturers";
+                        var description = "Retrieves the list of standards for the specified manufacturer.";
+                        var command = new AttributeParameteredCommandViewModel(name, description)
+                        {
+                            RequiredFamily = family
+                        };
+                        command.AddParameter("Manufacturer", "The unique name that identifies the specific manufacturer.", "0");
+                        Commands.Add(command);
+                    }
+                    {
+                        var name = "CdpMethodKey";
+                        var description = "Retrieves the key for the CDP method corresponding to the specified name.";
+                        var command = new AttributeParameteredCommandViewModel(name, description)
+                        {
+                            RequiredFamily = family
+                        };
+                        command.AddParameter("Name", "The unique name that identifies the specific CDP method.", String.Empty);
+                        Commands.Add(command);
+                    }
+                    {
+                        var name = "CdpMethod";
+                        var description = "Retrieves the detail data for the CDP method corresponding to the specified key.";
+                        var command = new AttributeParameteredCommandViewModel(name, description)
+                        {
+                            RequiredFamily = family
+                        };
+                        command.AddParameter("Key", "The unique key that identifies the specific CDP method for which detail data is to be retrieved. Leading zeros may be omitted.", "0");
+                        command.AddParameter("Name", "The unique name that identifies the specific CDP method for which detail data is to be retrieved.", String.Empty);
+                        Commands.Add(command);
+                    }
+                    {
+                        var name = "CdpMethods";
+                        var description = "Retrieves general data about each CDP method on the instrument.";
+                        var command = new ParameterlessCommandViewModel(name, description) {RequiredFamily = family};
+                        Commands.Add(command);
+                    }
+                    {
+                        var name = "LimitKey";
+                        var description = "Retrieves the key for the limit corresponding to the specified name.";
+                        var command = new AttributeParameteredCommandViewModel(name, description)
+                        {
+                            RequiredFamily = family
+                        };
+                        command.AddParameter("Name", "The unique name that identifies the specific limit.", String.Empty);
+                        Commands.Add(command);
+                    }
+                    {
+                        var name = "Limit";
+                        var description = "Retrieves the detail data for the limit corresponding to the specified key.";
+                        var command = new AttributeParameteredCommandViewModel(name, description)
+                        {
+                            RequiredFamily = family
+                        };
+                        command.AddParameter("Key", "The unique key that identifies the specific limit for which detail data is to be retrieved. Leading zeros may be omitted.", "0");
+                        command.AddParameter("Name", "The unique name that identifies the specific limit for which detail data is to be retrieved.", String.Empty);
+                        Commands.Add(command);
+                    }
+                    {
+                        var name = "Limits";
+                        var description = "Retrieves general data about each CDP limit on the instrument.";
+                        var command = new ParameterlessCommandViewModel(name, description) {RequiredFamily = family};
+                        Commands.Add(command);
+                    }
+                }
             }
         }
 
@@ -100,6 +249,25 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     Commands.Add(command);
                 }
                 {
+                    name = "Detectors";
+                    description = "Retrieves state of detectors on instruments that support IR detectors.";
+                    var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
+                    name = "DoubleValue";
+                    description = "Retrieves the detail data for the double corresponding to the specified key.";
+                    var command = new AttributeParameteredCommandViewModel(name, description);
+                    command.AddParameter("Key", "The unique key that identifies the specific double for which detail data is to be retrieved.", "");
+                    Commands.Add(command);
+                }
+                {
+                    name = "DoubleValues";
+                    description = "Retrieves general data about each double on the instrument.";
+                    var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
                     name = "ExceptionDirectory";
                     description = "Retrieves the names of the files and subdirectories in the instrument's main exception directory.";
                     var command = new ParameterlessCommandViewModel(name, description);
@@ -131,6 +299,12 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     Commands.Add(command);
                 }
                 {
+                    name = "InstrumentInfo";
+                    description = "Retrieves basic instrument information.";
+                    var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
                     name = "LogData";
                     description = "Retrieves log entries from specifed log.";
                     var command = new AttributeParameteredCommandViewModel(name, description);
@@ -143,6 +317,12 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                 {
                     name = "LogDirectory";
                     description = "Retrieves the names of the files and subdirectories in the instrument's main log directory.";
+                    var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
+                    name = "MessageHistory";
+                    description = "Retrieves recent messages published by the instrument.";
                     var command = new ParameterlessCommandViewModel(name, description);
                     Commands.Add(command);
                 }
@@ -257,10 +437,9 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     Commands.Add(command);
                 }
                 {
-                    name = "SetKeys";
+                    name = "SetKeysEx2";
                     description = "Retrieves the unique key for each set.";
-                    var command = new AttributeParameteredCommandViewModel(name, description);
-                    command.AddParameter("FilterKey", "The unique key that identifies the filter to use when retrieving the sets. Leading zeros may be omitted.", "");
+                    var command = new ParameterlessCommandViewModel(name, description);
                     Commands.Add(command);
                 }
                 {
@@ -269,6 +448,7 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     var command = new AttributeParameteredCommandViewModel(name, description);
                     command.AddParameter("Key", "The unique key that identifies the set. Leading zeros may be omitted.", "");
                     command.AddParameter("IncludeDetailData", "Indicates if the replicate data should include the detail data in addition to the general data.", false);
+                    command.AddParameter("Tag", "Optional rep tag. If specified, only that replicate's data will be returned.", "-1");
                     Commands.Add(command);
                 }
                 {
@@ -316,6 +496,25 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     Commands.Add(command);
                 }
                 {
+                    name = "StringValue";
+                    description = "Retrieves the detail data for the string corresponding to the specified key.";
+                    var command = new AttributeParameteredCommandViewModel(name, description);
+                    command.AddParameter("Key", "The unique key that identifies the specific string for which detail data is to be retrieved.", "");
+                    Commands.Add(command);
+                }
+                {
+                    name = "StringValues";
+                    description = "Retrieves general data about each string on the instrument.";
+                    var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
+                    name = "SupportedCultures";
+                    description = "Retrieves culture definitions supported by the instrument.";
+                    var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
                     name = "Switch";
                     description = "Retrieves the detail data for the switch corresponding to the specified key.";
                     var command = new AttributeParameteredCommandViewModel(name, description);
@@ -344,6 +543,18 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                 {
                     name = "Transports";
                     description = "Retrieves general data about each transport on the instrument.";
+                    var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
+                    name = "ValveStates";
+                    description = "Retrieves general data about each valve state on the instrument.";
+                    var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
+                    name = "Version";
+                    description = "Retrieves instrument version information.";
                     var command = new ParameterlessCommandViewModel(name, description);
                     Commands.Add(command);
                 }

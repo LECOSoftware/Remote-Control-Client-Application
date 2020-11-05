@@ -71,6 +71,8 @@
             <Setter Property="TextBox.Background" Value="Transparent"/>
             <Setter Property="TextBox.TextWrapping" Value="Wrap"/>
             <Setter Property="TextBox.Foreground" Value="AntiqueWhite" />
+            <Setter Property="TextBox.FontWeight" Value="Bold"/>
+            <Setter Property="TextBox.FontSize" Value="18"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Direction}" Value="IN">
                     <Setter Property="TextBox.Foreground" Value="Green" />

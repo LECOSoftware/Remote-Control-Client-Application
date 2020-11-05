@@ -33,30 +33,49 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
 
         private void SetupAvailability()
         {
-            if (ConnectionViewModel.Connected)
+            if(ConnectionViewModel.IsTcpConnection)
             {
-                if (ConnectionViewModel.LoggedOn)
+                if (ConnectionViewModel.Connected)
                 {
-                    if (ConnectionViewModel.InRemoteControlMode)
+                    if (ConnectionViewModel.LoggedOn)
                     {
-                        if (CommandsEnabled)
-                            AvailabilityText = "The connected instrument supports Remote Control commands.";
+                        if (ConnectionViewModel.InRemoteControlMode)
+                        {
+                            if (CommandsEnabled)
+                                AvailabilityText = "The connected instrument supports Remote Control commands.";
+                            else
+                                AvailabilityText = "The connected instrument does not support Remote Control commands.";
+                        }
                         else
-                            AvailabilityText = "The connected instrument does not support Remote Control commands.";
+                        {
+                            AvailabilityText = "Remote Control commands cannot be executed because the connected instrument is not currently in remote control mode.";
+                        }
                     }
                     else
                     {
-                        AvailabilityText = "Remote Control commands cannot be executed because the connected instrument is not currently in remote control mode.";
+                        AvailabilityText = "In order to execute Remote Control commands use the log on controls to specify a valid user.";
                     }
                 }
                 else
                 {
-                    AvailabilityText = "In order to execute Remote Control commands use the log on controls to specify a valid user.";
+                    AvailabilityText = "In order to execute Remote Control commands use the connection controls to establish a connection to a Cornerstone instrument.";
                 }
             }
             else
             {
-                AvailabilityText = "In order to execute Remote Control commands use the connection controls to establish a connection to a Cornerstone instrument.";
+                if(!String.IsNullOrEmpty(ConnectionViewModel.HttpInstrumentRegistration) &&
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpLabKey) &&
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpLabName) &&
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpPassword) &&
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpUser) &&
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpServer))
+                {
+                    AvailabilityText = String.Empty;
+                }
+                else
+                {
+                    AvailabilityText = "In order to execute Remote Control commands, enter values for user, password, lab name, lab key and instrument registration on the Connection tab.";
+                }
             }
         }
 
@@ -95,6 +114,12 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     Commands.Add(command);
                 }
                 {
+                    name = "ClearAbortFlag";
+                    description = "Clears the Abort flag.";
+                    var command = new ParameterlessCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
                     name = "ContinueAnalysis";
                     description = "Continues the analysis sequence when Cornerstone has prompted the user to perform an action and indicate when analysis should continue.";
                     var command = new ParameterlessCommandViewModel(name, description);
@@ -110,6 +135,13 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
                     name = "ExcludeSamples";
                     description = "Marks the specified sets and replicates as excluded.";
                     var command = new SetAndRepsCommandViewModel(name, description);
+                    Commands.Add(command);
+                }
+                {
+                    name = "ExecuteSequence";
+                    description = "Executes the specified sequence.";
+                    var command = new AttributeParameteredCommandViewModel(name, description);
+                    command.AddParameter("Sequence", "The name of the sequence to execute.", "");
                     Commands.Add(command);
                 }
                 {

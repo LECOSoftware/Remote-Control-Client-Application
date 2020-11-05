@@ -37,7 +37,7 @@ namespace CornerstoneRemoteControlClient.ViewModels
             EventAggregatorContext.Current.GetEvent<SendDataEvent>().Publish(eventArgs);
         }
 
-        public virtual void ProcessResponse(XDocument response) {}
-        public virtual void TrafficOut(XDocument dataOut) {}
+        public virtual void ProcessResponse(Object response) {}
+        public virtual void TrafficOut(string dataOut) {}
     }
 }

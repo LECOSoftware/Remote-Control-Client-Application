@@ -36,6 +36,18 @@ namespace CornerstoneRemoteControlClient.ViewModels.CommandViewModels
 
         #region Public Properties
 
+        private string _requiredFamily = string.Empty;
+
+        public string RequiredFamily
+        {
+            get => _requiredFamily;
+            set
+            {
+                _requiredFamily = value;
+                RaisePropertyChanged(nameof(RequiredFamily));
+            }
+        }
+
         private String _name;
         public String Name
         {

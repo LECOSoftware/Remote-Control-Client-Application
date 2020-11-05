@@ -1,5 +1,6 @@
-CornerstoneRemoteControlClient/bin/
-CornerstoneRemoteControlClient/obj/
-CornerstoneRemoteControlClient/publish/
+/.vs
+/*.suo
+CornerstoneRemoteControlClient/bin
+CornerstoneRemoteControlClient/obj
 CornerstoneRemoteControlClient/CornerstoneRemoteControlClient.csproj.user
-CornerstoneRemoteControlClient/CornerstoneRemoteControlClient_TemporaryKey.pfx
+CornerstoneRemoteControlClient/publish/

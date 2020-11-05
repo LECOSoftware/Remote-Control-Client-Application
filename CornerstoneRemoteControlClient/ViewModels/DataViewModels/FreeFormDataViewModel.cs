@@ -32,8 +32,16 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
 
             try
             {
-                var commandDocument = XDocument.Parse(UserCommandText);
-                EventAggregatorContext.Current.GetEvent<SendDataEvent>().Publish(new SendDataEventArgs(commandDocument, this));
+                /*var commandDocument = XDocument.Parse(UserCommandText);
+
+                var cookie = string.Empty;
+                var cookieAttribute = commandDocument.Root.Attribute("Cookie");
+                if (cookieAttribute != null)
+                {
+                    cookie = cookieAttribute.Value;
+                }*/
+                
+                EventAggregatorContext.Current.GetEvent<SendDataEvent>().Publish(new SendDataEventArgs(UserCommandText, this, string.Empty));
             }
             catch (Exception exception)
             {
@@ -59,7 +67,15 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
         {
             get
             {
-                return CommandsEnabled;
+                if (ConnectionViewModel.IsTcpConnection)
+                    return CommandsEnabled;
+
+                return (!String.IsNullOrEmpty(ConnectionViewModel.HttpInstrumentRegistration) &&
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpLabKey) &&
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpLabName) &&
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpPassword) &&
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpUser) &&
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpServer));
             }
         }
 

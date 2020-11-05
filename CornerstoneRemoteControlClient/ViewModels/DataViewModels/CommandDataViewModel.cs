@@ -32,14 +32,14 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
 
         #region Public Interface
 
-        public override void ProcessResponse(XDocument response)
+        public override void ProcessResponse(Object response)
         {
             AddTraffic("IN", response);
 
             ErrorText = ProcessErrors(response);
         }
 
-        public override void TrafficOut(XDocument dataOut)
+        public override void TrafficOut(string dataOut)
         {
             AddTraffic("OUT", dataOut);
         }
@@ -59,20 +59,29 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
             if (CurrentCommand != null)
             {
                 var commandDocument = CurrentCommand.GetCommand();
-                EventAggregatorContext.Current.GetEvent<SendDataEvent>().Publish(new SendDataEventArgs(commandDocument, this, CurrentCommand.Cookie));
+                EventAggregatorContext.Current.GetEvent<SendDataEvent>().Publish(new SendDataEventArgs(commandDocument.ToString(), this, CurrentCommand.Cookie));
             }
         }
 
-        private void AddTraffic(String direction, XDocument data)
+        private void AddTraffic(String direction, object obj)
         {
             using (Traffic.AcquireLock())
             {
-                var trafficData = new TrafficData(direction, data.ToString());
+                if (obj is XDocument)
+                {
+                    var data = obj as XDocument;
+                    var trafficData = new TrafficData(direction, data.ToString());
 
-                if (Traffic.Count == 100)
-                    Traffic.RemoveAt(0);
+                    if (Traffic.Count == 100)
+                        Traffic.RemoveAt(0);
 
-                Traffic.Add(trafficData);
+                    Traffic.Add(trafficData);
+                }
+                else
+                {
+                    var trafficData = new TrafficData(direction, obj.ToString());
+                    Traffic.Add(trafficData);
+                }
             }
         }
 
@@ -83,10 +92,12 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
             RaisePropertyChanged("CanExecuteCommand");
         }
 
-        private String ProcessErrors(XDocument response)
+        private String ProcessErrors(Object resp)
         {
             var errorText = String.Empty;
 
+            if (!(resp is XDocument)) return string.Empty;
+            var response = resp as XDocument;
             if (response != null && response.Root != null)
             {
                 if (response.Root.Name.LocalName == "Error")
@@ -194,7 +205,15 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
         {
             get
             {
-                return CommandsEnabled & ConnectionViewModel.LoggedOn && CurrentCommand != null;
+                if(ConnectionViewModel.IsTcpConnection)
+                    return CommandsEnabled & ConnectionViewModel.LoggedOn && CurrentCommand != null;
+
+                return (!String.IsNullOrEmpty(ConnectionViewModel.HttpInstrumentRegistration) && 
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpLabKey) && 
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpLabName) && 
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpPassword) && 
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpUser) && 
+                        !String.IsNullOrEmpty(ConnectionViewModel.HttpServer));
             }
         }
 

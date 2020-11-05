@@ -2,6 +2,7 @@
 
 using Autofac;
 using CornerstoneRemoteControlClient.Communications;
+using CornerstoneRemoteControlClient.Helpers;
 using CornerstoneRemoteControlClient.ViewModels;
 using CornerstoneRemoteControlClient.ViewModels.DataViewModels;
 
@@ -12,6 +13,8 @@ namespace CornerstoneRemoteControlClient
 
         protected override void Load(ContainerBuilder containerBuilder)
         {
+            containerBuilder.RegisterType<WebRequestor>().AsSelf().As<IWebRequestor>();
+            containerBuilder.RegisterType<HashCreator>().AsSelf().As<IHashCreator>();
             containerBuilder.RegisterType<ConnectionViewModel>().AsSelf().As<IConnectionViewModel>().SingleInstance();
             containerBuilder.RegisterType<CommunicationEngine>().As<ICommunicationEngine>().SingleInstance();
             containerBuilder.RegisterType<MainViewModel>().AsSelf();

@@ -54,14 +54,14 @@
     <ApplicationIcon>Cornerstone.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>D7FD26BC42489D4F37BF3F821463B1A44BE28739</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>7741403134E8621093120480A7855F275C3E742E</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>
     </ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <GenerateManifests>true</GenerateManifests>
+    <GenerateManifests>false</GenerateManifests>
   </PropertyGroup>
   <PropertyGroup>
     <TargetZone>LocalIntranet</TargetZone>
@@ -70,7 +70,7 @@
     <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
   </PropertyGroup>
   <PropertyGroup>
-    <SignManifests>true</SignManifests>
+    <SignManifests>false</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestTimestampUrl>http://timestamp.verisign.com/scripts/timestamp.dll</ManifestTimestampUrl>
@@ -114,8 +114,11 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Communications\ReceivedDataStateObject.cs" />
+    <Compile Include="Communications\ServerResponseErrorInfo.cs" />
+    <Compile Include="Communications\WebRequestor.cs" />
     <Compile Include="Events\MessageDataEvent.cs" />
     <Compile Include="Events\RecordDataTrafficEvent.cs" />
+    <Compile Include="Helpers\HashCreator.cs" />
     <Compile Include="Helpers\NotBooleanToVisibilityConverter.cs" />
     <Compile Include="ViewModels\CommandViewModels\AddSamplesCommandViewModel.cs" />
     <Compile Include="ViewModels\AttributeParameter.cs" />
@@ -391,7 +394,7 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <Target Name="AfterCompile">
-    <Exec Command="&quot;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Bin\signtool.exe&quot; sign /v /sha1 D7FD26BC42489D4F37BF3F821463B1A44BE28739 /t http://timestamp.verisign.com/scripts/timestamp.dll &quot;obj\Release\CornerstoneRemoteControlClient.exe&quot;" />
-  </Target>
+  <!--<Target Name="AfterCompile">
+    <Exec Command="&quot;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Bin\signtool.exe&quot; sign /v /fd sha256 /n &quot;LECO Corporation&quot; /sha1 885D914C569279EBF36D457C076325F207E1739F /t http://timestamp.verisign.com/scripts/timestamp.dll &quot;obj\$(ConfigurationName)\$(TargetFileName)&quot;" />
+  </Target>-->
 </Project>

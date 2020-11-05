@@ -9,4 +9,6 @@ namespace CornerstoneRemoteControlClient.Events
     /// Event raised when an asynchronous message from Cornerstone is received.
     /// </summary>
     public class MessageDataEvent : CompositePresentationEvent<XDocument>{}
+
+    public class MessageData2Event : CompositePresentationEvent<string> {}
 }

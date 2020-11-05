@@ -10,6 +10,7 @@ using System.Timers;
 using System.Xml.Linq;
 using CornerstoneRemoteControlClient.Events;
 using CornerstoneRemoteControlClient.ViewModels.DataViewModels;
+using CornerstoneRemoteControlClient.ViewModels;
 
 namespace CornerstoneRemoteControlClient.Communications
 {
@@ -19,6 +20,9 @@ namespace CornerstoneRemoteControlClient.Communications
         void Disconnect();
 
         String RequestCulture { get; set; }
+        Encoding EncodingToUse { get; set; }
+
+        IConnectionViewModel ParentConnectionViewModel { get; set; }
     }
 
     /// <summary>
@@ -30,15 +34,22 @@ namespace CornerstoneRemoteControlClient.Communications
     {
         #region Constructor
 
-        public CommunicationEngine()
+        /// <summary>
+        /// Constructs instance of CommunicationEngine class. 
+        /// </summary>
+        /// <param name="webRequestor">Instance of class used to perform HTTP-type communications with instrument.</param>
+        public CommunicationEngine(IWebRequestor webRequestor)
         {
+            _webRequestor = webRequestor;
+
             //Create the heartbeat timer to keep the connection alive.
             _heartbeatTimer = new System.Timers.Timer();
             _heartbeatTimer.Elapsed += HeartbeatTimerOnElapsed;
-            _heartbeatTimer.Interval = 30000; //30 seconds
+            _heartbeatTimer.Interval = 5000;//30000; //30 seconds
 
             //Create the heartbeat command document once so we don't have to keep creating it every time we send a heartbeat command.
-            _heartbeatEventArgs = new SendDataEventArgs(XDocument.Parse("<Heartbeat/>"), null);
+            //_heartbeatEventArgs = new SendDataEventArgs(XDocument.Parse("<Status  IncludeGauges=\"False\" IncludeSystemCheckResults=\"False\" IncludeLeakCheckResults=\"False\"/>"), null);
+            _heartbeatEventArgs = new SendDataEventArgs("<Heartbeat/>", null);
 
             //Start out with English as the default.
             RequestCulture = "en-US";
@@ -48,6 +59,8 @@ namespace CornerstoneRemoteControlClient.Communications
 
             //Start the background thread to monitor commands to send to Cornerstone.
             Task.Factory.StartNew(MonitorQueue);
+
+            EncodingToUse = Encoding.Unicode;
         }
 
         #endregion
@@ -110,6 +123,14 @@ namespace CornerstoneRemoteControlClient.Communications
             }
         }
 
+        public Encoding EncodingToUse { get; set; }
+
+        /// <summary>
+        /// Instance of the parent view model that contains the communication settings. This class
+        /// will need to access some of those settings when performing HTTP-type communications.
+        /// </summary>
+        public IConnectionViewModel ParentConnectionViewModel { get; set; }
+
         #endregion
 
         #region Private Methods
@@ -136,22 +157,27 @@ namespace CornerstoneRemoteControlClient.Communications
                     {
                         //Make sure the command has data to be sent.
                         var data = eventArgs.Data;
-                        if (data != null && data.Root != null)
+                        if (data != null)
                         {
                             //If the command does not already have an cookie, we will give
                             //it a GUID as its cookie.
                             if (String.IsNullOrEmpty(eventArgs.Cookie))
                                 eventArgs.Cookie = Guid.NewGuid().ToString();
 
-                            //Add on the cookie ID and the current request culture to the data XML.
-                            data.Root.SetAttributeValue("Cookie", eventArgs.Cookie);
-                            data.Root.SetAttributeValue("Culture", RequestCulture);
+                            if (data.StartsWith("<"))
+                            {
+                                var document = XDocument.Parse(data);
+                                //Add on the cookie ID and the current request culture to the data XML.
+                                document.Root.SetAttributeValue("Cookie", eventArgs.Cookie);
+                                document.Root.SetAttributeValue("Culture", RequestCulture);
+                                data = document.ToString();
+                            }
 
                             //Keep track of this command.
                             _pendingCommand = eventArgs;
 
                             //Fire the command off to Cornerstone.
-                            SendData(Encoding.Unicode.GetBytes(data.ToString()));
+                            SendData(EncodingToUse.GetBytes(data));
 
                             //Let the sender know that the data went out.
                             if (eventArgs.Sender != null)
@@ -174,7 +200,7 @@ namespace CornerstoneRemoteControlClient.Communications
         /// <param name="elapsedEventArgs">Event arguments</param>
         private void HeartbeatTimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
         {
-            OnSendData(_heartbeatEventArgs);
+            //OnSendData(_heartbeatEventArgs);
         }
 
         /// <summary>
@@ -182,18 +208,40 @@ namespace CornerstoneRemoteControlClient.Communications
         /// command to the queue.
         /// </summary>
         /// <param name="eventArgs">Event arguments</param>
-        private void OnSendData(SendDataEventArgs eventArgs)
+        private async void OnSendData(SendDataEventArgs eventArgs)
         {
-            try
+            if(ParentConnectionViewModel != null)
             {
-                //Add the command to the queue.
-                _pendingCommands.Enqueue(eventArgs);
-                //Signal the event to cause the monitoring method to send this command.
-                _requestEnqueued.Set();
-            }
-            catch (Exception)
-            {
-                Disconnect();
+                //Check what type of communications we are performing.
+                if(ParentConnectionViewModel.IsTcpConnection)
+                {
+                    //TCP-type communications is selected.
+                    try
+                    {
+                        //Add the command to the queue.
+                        _pendingCommands.Enqueue(eventArgs);
+                        //Signal the event to cause the monitoring method to send this command.
+                        _requestEnqueued.Set();
+                    }
+                    catch (Exception)
+                    {
+                        Disconnect();
+                    }
+                }
+                else
+                {
+                    //HTTP-type communications is selected.
+
+                    //Create a web request and send to server.
+                    XDocument returnData = null;
+                    await Task.Run(async () =>
+                    {
+                        var responseDocument = await _webRequestor.MakeRequest(_webRequestor.CreateUri("RequestData.aspx", ParentConnectionViewModel.HttpInstrumentRegistration, ParentConnectionViewModel.HttpServer), ParentConnectionViewModel.GeneratePostData(eventArgs.Data.ToString()));
+                        returnData = responseDocument;
+                    });
+                    //Show web server response.
+                    eventArgs.Sender.ProcessResponse(returnData);
+                }
             }
         }
 
@@ -229,7 +277,7 @@ namespace CornerstoneRemoteControlClient.Communications
                     if (bytes > 4)
                     {
                         stateObject.Length -= (bytes - 4);
-                        stateObject.Data += Encoding.Unicode.GetString(_receiveBuffer, 4, bytes - 4);
+                        stateObject.Data += EncodingToUse.GetString(_receiveBuffer, 4, bytes - 4);
 
                         //check if we have received it all.
                         if (stateObject.Length <= 0)
@@ -248,7 +296,7 @@ namespace CornerstoneRemoteControlClient.Communications
                     //Subtract them from the total that we are expecting.
                     stateObject.Length -= bytes;
                     //Append the data to our running compilation.
-                    stateObject.Data += Encoding.Unicode.GetString(_receiveBuffer, 0, bytes);
+                    stateObject.Data += EncodingToUse.GetString(_receiveBuffer, 0, bytes);
 
                     EventAggregatorContext.Current.GetEvent<RecordDataTrafficEvent>().Publish(new DataTrafficSentReceivedViewModel(_receiveBuffer, false, bytes));
 
@@ -280,7 +328,48 @@ namespace CornerstoneRemoteControlClient.Communications
                 return;
             }
 
-            var receivedData = XDocument.Parse(stateObject.Data);
+            if (!string.IsNullOrEmpty(stateObject.Data) && stateObject.Data.TrimStart().StartsWith("<"))
+            {
+                var receivedData = XDocument.Parse(stateObject.Data);
+                var root = receivedData.Root;
+                if (root == null)
+                {
+                    return;
+                }
+
+                if (_pendingCommand != null && root.Name.LocalName != "CornerstoneMessage")
+                {
+                    var sender = _pendingCommand.Sender;
+                    //Send the received data back to the object that issued the command so it can process the response.
+                    sender?.ProcessResponse(receivedData);
+
+                    //We no longer have a pending command to keep track of.
+                    _pendingCommand = null;
+                }
+                else
+                {
+                    EventAggregatorContext.Current.GetEvent<MessageDataEvent>().Publish(receivedData);
+                }
+            }
+            else if (!string.IsNullOrEmpty(stateObject.Data) &&
+                     (stateObject.Data.TrimStart().StartsWith("{") || stateObject.Data.TrimStart().StartsWith("[")))
+            {
+                var sender = _pendingCommand.Sender;
+                //Send the received data back to the object that issued the command so it can process the response.
+                sender?.ProcessResponse(stateObject.Data);
+                _pendingCommand = null;
+            }
+            else
+            {
+                var sender = _pendingCommand.Sender;
+                if (sender != null)
+                {
+                    //Send the received data back to the object that issued the command so it can process the response.
+                    sender.ProcessResponse(stateObject.Data);
+                }
+                EventAggregatorContext.Current.GetEvent<MessageData2Event>().Publish(stateObject.Data);
+            }
+            /*var receivedData = XDocument.Parse(stateObject.Data);
             var root = receivedData.Root;
             if (root == null)
             {
@@ -302,7 +391,7 @@ namespace CornerstoneRemoteControlClient.Communications
             else
             {
                 EventAggregatorContext.Current.GetEvent<MessageDataEvent>().Publish(receivedData);
-            }
+            }*/
         }
 
         /// <summary>
@@ -342,6 +431,11 @@ namespace CornerstoneRemoteControlClient.Communications
         #endregion
 
         #region Private Members
+
+        /// <summary>
+        /// Facilitates sending HTTP-type commands to the instrument.
+        /// </summary>
+        private IWebRequestor _webRequestor;
 
         /// <summary>
         /// Represents the connection to Cornerstone.

@@ -12,14 +12,14 @@ namespace CornerstoneRemoteControlClient.Events
     /// </summary>
     public class SendDataEventArgs
     {
-        public SendDataEventArgs(XDocument data, IMessageProcessor sender, String cookie = "")
+        public SendDataEventArgs(String data, IMessageProcessor sender, String cookie = "")
         {
             Data = data;
             Sender = sender;
             Cookie = cookie;
         }
 
-        public XDocument Data { get; private set; }
+        public String Data { get; private set; }
         public IMessageProcessor Sender { get; private set; }
         public String Cookie { get; set; }
     }

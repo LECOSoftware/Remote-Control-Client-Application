@@ -7,13 +7,15 @@
              d:DesignHeight="300" d:DesignWidth="300">
     
     <UserControl.Resources>
-        <Style x:Key="DataRepresentationStyle" TargetType="TextBlock">
+        <Style x:Key="DataRepresentationStyle" TargetType="TextBox">
+            <Setter Property="TextBox.Background" Value="Transparent"/>
+            <Setter Property="TextBox.TextWrapping" Value="Wrap"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsSentData}" Value="True">
-                    <Setter Property="TextBlock.Foreground" Value="Green"/>
+                    <Setter Property="TextBox.Foreground" Value="Green"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding IsSentData}" Value="False">
-                    <Setter Property="TextBlock.Foreground" Value="Yellow"/>
+                    <Setter Property="TextBox.Foreground" Value="Yellow"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -43,8 +45,8 @@
                                 <ColumnDefinition Width=".5*"/>
                                 <ColumnDefinition Width=".5*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="{Binding ByteRepresentation}" TextWrapping="Wrap" Margin="5" Grid.Column="0" Style="{StaticResource DataRepresentationStyle}"/>
-                            <TextBlock Text="{Binding ReadableRepresentation}" TextWrapping="Wrap" Margin="5" Grid.Column="1" Style="{StaticResource DataRepresentationStyle}"/>
+                            <TextBox IsReadOnly="True" BorderThickness="0" Text="{Binding ByteRepresentation, Mode=OneWay}" Margin="5" Grid.Column="0" Style="{StaticResource DataRepresentationStyle}"/>
+                            <TextBox IsReadOnly="True" BorderThickness="0" Text="{Binding ReadableRepresentation, Mode=OneWay}" Margin="5" Grid.Column="1" Style="{StaticResource DataRepresentationStyle}"/>
                         </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

@@ -21,6 +21,7 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
             Messages = new ObservableList<string>(Application.Current.Dispatcher);
 
             EventAggregatorContext.Current.GetEvent<MessageDataEvent>().Subscribe(OnMessageDataReceived);
+            EventAggregatorContext.Current.GetEvent<MessageData2Event>().Subscribe(OnMessageData2Received);
         }
 
         #endregion
@@ -40,6 +41,14 @@ namespace CornerstoneRemoteControlClient.ViewModels.DataViewModels
             if (!IsSelected)
             {
                 IsFlashing = true;
+            }
+        }
+
+        private void OnMessageData2Received(string obj)
+        {
+            using (Messages.AcquireLock())
+            {
+                Messages.Add(obj);
             }
         }
 
