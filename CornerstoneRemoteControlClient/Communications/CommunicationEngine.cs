@@ -264,6 +264,10 @@ namespace CornerstoneRemoteControlClient.Communications
                     //The state object is null which indicates that this is a new response and not a continuation
                     //of a previous response.
                     var bytes = _tcpClient.GetStream().EndRead(ar);
+                    
+                    // Detect the stream ended.
+                    if (bytes == 0)
+                        return;
 
                     //Get the number of bytes contained in the command response.
                     int length = BitConverter.ToInt32(_receiveBuffer, 0);
