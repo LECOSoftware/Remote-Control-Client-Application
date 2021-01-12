@@ -1,7 +1,7 @@
 ﻿// Copyright © LECO Corporation 2013.  All Rights Reserved.
 
 using System.Diagnostics;
-using Microsoft.Practices.Prism.Events;
+using Prism.Events;
 
 namespace CornerstoneRemoteControlClient.Events
 {

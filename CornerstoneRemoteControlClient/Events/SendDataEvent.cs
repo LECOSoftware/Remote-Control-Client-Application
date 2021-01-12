@@ -3,7 +3,7 @@
 using System;
 using System.Xml.Linq;
 using CornerstoneRemoteControlClient.ViewModels;
-using Microsoft.Practices.Prism.Events;
+using Prism.Events;
 
 namespace CornerstoneRemoteControlClient.Events
 {
@@ -27,5 +27,5 @@ namespace CornerstoneRemoteControlClient.Events
     /// <summary>
     /// Event raised when an object wishes to send a command to Cornerstone.
     /// </summary>
-    public class SendDataEvent : CompositePresentationEvent<SendDataEventArgs> { }
+    public class SendDataEvent : PubSubEvent<SendDataEventArgs> { }
 }

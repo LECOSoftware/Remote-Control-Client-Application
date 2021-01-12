@@ -4,3 +4,5 @@ CornerstoneRemoteControlClient/bin
 CornerstoneRemoteControlClient/obj
 CornerstoneRemoteControlClient/CornerstoneRemoteControlClient.csproj.user
 CornerstoneRemoteControlClient/publish/
+/.idea/
+/publish/
