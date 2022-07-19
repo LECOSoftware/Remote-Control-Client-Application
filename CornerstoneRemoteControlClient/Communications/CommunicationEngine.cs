@@ -1,19 +1,20 @@
-﻿// Copyright © LECO Corporation 2013.  All Rights Reserved.
-
-using System;
-using System.Collections.Concurrent;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Timers;
-using System.Xml.Linq;
-using CornerstoneRemoteControlClient.Events;
-using CornerstoneRemoteControlClient.ViewModels.DataViewModels;
-using CornerstoneRemoteControlClient.ViewModels;
+﻿// © 2013-2022 LECO Corporation.
 
 namespace CornerstoneRemoteControlClient.Communications
 {
+    using System;
+    using System.Collections.Concurrent;
+    using System.Collections.Generic;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using System.Timers;
+    using System.Xml.Linq;
+    using CornerstoneRemoteControlClient.Events;
+    using CornerstoneRemoteControlClient.ViewModels.DataViewModels;
+    using CornerstoneRemoteControlClient.ViewModels;
+
     public interface ICommunicationEngine
     {
         Boolean Connect(String ipAddress, int port);
@@ -75,7 +76,7 @@ namespace CornerstoneRemoteControlClient.Communications
         /// <returns>Returns true if a connection to Cornerstone was established, otherwise returns false.</returns>
         public Boolean Connect(String ipAddress, int port)
         {
-            Boolean connected = true;
+            var connected = true;
 
             try
             {
@@ -106,7 +107,7 @@ namespace CornerstoneRemoteControlClient.Communications
             //We no longer need the heartbeat timer, so stop it.
             _heartbeatTimer.Stop();
 
-            if (_tcpClient != null)
+            if (_tcpClient is not null)
             {
                 //Close the connection.
                 _tcpClient.Close();
@@ -116,8 +117,7 @@ namespace CornerstoneRemoteControlClient.Communications
                 EventAggregatorContext.Current.GetEvent<ClientDisconnectedEvent>().Publish(false);
 
                 //Clear out any pending commands that were in the queue.
-                SendDataEventArgs args;
-                while (_pendingCommands.Count > 0) _pendingCommands.TryDequeue(out args);
+                while (!_pendingCommands.IsEmpty) _pendingCommands.TryDequeue(out _);
 
                 _pendingCommand = null;
             }
@@ -149,15 +149,15 @@ namespace CornerstoneRemoteControlClient.Communications
                 //Check to see if we are already processing another command. We do not
                 //want to process the next command until a response has been returned for
                 //command currently being processed.
-                if (_pendingCommand == null)
+                // if (_pendingCommand is null)
                 {
                     //Prepare to send this command. Grab it off of the queue.
-                    SendDataEventArgs eventArgs;
-                    if (_pendingCommands.TryDequeue(out eventArgs))
+                    var dataPackets = new List<string>();
+                    while (_pendingCommands.TryDequeue(out var eventArgs))
                     {
                         //Make sure the command has data to be sent.
                         var data = eventArgs.Data;
-                        if (data != null)
+                        if (data is not null)
                         {
                             //If the command does not already have an cookie, we will give
                             //it a GUID as its cookie.
@@ -175,15 +175,16 @@ namespace CornerstoneRemoteControlClient.Communications
 
                             //Keep track of this command.
                             _pendingCommand = eventArgs;
-
-                            //Fire the command off to Cornerstone.
-                            SendData(EncodingToUse.GetBytes(data));
+                            
+                            dataPackets.Add(data);
 
                             //Let the sender know that the data went out.
-                            if (eventArgs.Sender != null)
-                                eventArgs.Sender.TrafficOut(data);
+                            eventArgs.Sender?.TrafficOut(data);
                         }
                     }
+
+                    //Fire the command off to Cornerstone.
+                    SendData(dataPackets);
                 }
 
                 if (_pendingCommands.Count > 0)
@@ -210,10 +211,10 @@ namespace CornerstoneRemoteControlClient.Communications
         /// <param name="eventArgs">Event arguments</param>
         private async void OnSendData(SendDataEventArgs eventArgs)
         {
-            if(ParentConnectionViewModel != null)
+            if (ParentConnectionViewModel is not null)
             {
                 //Check what type of communications we are performing.
-                if(ParentConnectionViewModel.IsTcpConnection)
+                if (ParentConnectionViewModel.IsTcpConnection)
                 {
                     //TCP-type communications is selected.
                     try
@@ -236,7 +237,11 @@ namespace CornerstoneRemoteControlClient.Communications
                     XDocument returnData = null;
                     await Task.Run(async () =>
                     {
-                        var responseDocument = await _webRequestor.MakeRequest(_webRequestor.CreateUri("RequestData.aspx", ParentConnectionViewModel.HttpInstrumentRegistration, ParentConnectionViewModel.HttpServer), ParentConnectionViewModel.GeneratePostData(eventArgs.Data.ToString()));
+                        var responseDocument = await _webRequestor.MakeRequest(
+                            _webRequestor.CreateUri("RequestData.aspx",
+                                ParentConnectionViewModel.HttpInstrumentRegistration,
+                                ParentConnectionViewModel.HttpServer),
+                            ParentConnectionViewModel.GeneratePostData(eventArgs.Data));
                         returnData = responseDocument;
                     });
                     //Show web server response.
@@ -258,66 +263,32 @@ namespace CornerstoneRemoteControlClient.Communications
         {
             try
             {
-                var stateObject = ar.AsyncState as ReceivedDataStateObject;
-                if (stateObject == null)
+                //Find out how many bytes are in the response.
+                var bytes = _tcpClient.GetStream().EndRead(ar);
+                EventAggregatorContext.Current.GetEvent<RecordDataTrafficEvent>().Publish(
+                    new DataTrafficSentReceivedViewModel(_receiveBuffer, false, bytes));
+
+                if (ar.AsyncState is ReceivedDataStateObject stateObject)
+                {
+                    ReadRemainingData(stateObject, bytes);
+                }
+                else
                 {
                     //The state object is null which indicates that this is a new response and not a continuation
                     //of a previous response.
-                    var bytes = _tcpClient.GetStream().EndRead(ar);
                     
                     // Detect the stream ended.
                     if (bytes == 0)
                         return;
 
-                    //Get the number of bytes contained in the command response.
-                    int length = BitConverter.ToInt32(_receiveBuffer, 0);
                     //Create a state object to hold onto the response.
-                    stateObject = new ReceivedDataStateObject { Length = length };
-
-                    EventAggregatorContext.Current.GetEvent<RecordDataTrafficEvent>().Publish(new DataTrafficSentReceivedViewModel(_receiveBuffer, false, bytes));
-
-                    //check if we have received more than 4 bytes. The 4 bytes contains the length of the following
-                    //data. If we have received more than the 4 bytes, we need to add that to our buffer.
-                    if (bytes > 4)
-                    {
-                        stateObject.Length -= (bytes - 4);
-                        stateObject.Data += EncodingToUse.GetString(_receiveBuffer, 4, bytes - 4);
-
-                        //check if we have received it all.
-                        if (stateObject.Length <= 0)
-                        {
-                            //process the data we have received.
-                            ProcessReceivedData(stateObject);
-                        }
-                    }
-                    //Set ourselves up to be notified when more data arrives.
-                    _tcpClient.GetStream().BeginRead(_receiveBuffer, 0, _receiveBuffer.Length, DataReceived, stateObject);
+                    stateObject = new ReceivedDataStateObject();
+                    ReadAndProcessData(stateObject, bytes, 0);
                 }
-                else
-                {
-                    //Find out how many bytes are in the response.
-                    var bytes = _tcpClient.GetStream().EndRead(ar);
-                    //Subtract them from the total that we are expecting.
-                    stateObject.Length -= bytes;
-                    //Append the data to our running compilation.
-                    stateObject.Data += EncodingToUse.GetString(_receiveBuffer, 0, bytes);
 
-                    EventAggregatorContext.Current.GetEvent<RecordDataTrafficEvent>().Publish(new DataTrafficSentReceivedViewModel(_receiveBuffer, false, bytes));
-
-                    if (stateObject.Length > 0)
-                    {
-                        //We are still waiting for more of the response, so starting waiting....
-                        _tcpClient.GetStream().BeginRead(_receiveBuffer, 0, _receiveBuffer.Length, DataReceived, stateObject);
-                    }
-                    else
-                    {
-                        //process the data we have received.
-                        ProcessReceivedData(stateObject);
-
-                        //Start waiting for the next response.
-                        _tcpClient.GetStream().BeginRead(_receiveBuffer, 0, _receiveBuffer.Length, DataReceived, null);
-                    }
-                }
+                //Set ourselves up to be notified when more data arrives.
+                _tcpClient.GetStream().BeginRead(_receiveBuffer, 0, _receiveBuffer.Length, DataReceived,
+                    stateObject.RemainingNeededData > 0 ? stateObject : null);
             }
             catch
             {
@@ -325,65 +296,110 @@ namespace CornerstoneRemoteControlClient.Communications
             }
         }
 
+        private void ReadAndProcessData(ReceivedDataStateObject stateObject, int bytes, int index)
+        {
+            if (bytes < 4)
+                return;
+
+            //Get the number of bytes contained in the command response.
+            var length = BitConverter.ToInt32(_receiveBuffer, index);
+            index += 4;
+            bytes -= 4;
+            var readLength = Math.Min(length, bytes);
+            stateObject.Data = EncodingToUse.GetString(_receiveBuffer, index, readLength);
+            if (length <= bytes)
+            {
+                ProcessReceivedData(stateObject);
+            }
+            else
+            {
+                stateObject.RemainingNeededData = length - bytes;
+                bytes = 0;
+            }
+
+            TryReadMoreData(stateObject, bytes, index, readLength);
+        }
+
+        private void ReadRemainingData(ReceivedDataStateObject stateObject, int bytes)
+        {
+            var readLength = Math.Min(stateObject.RemainingNeededData, bytes);
+            stateObject.Data += EncodingToUse.GetString(_receiveBuffer, 0, readLength);
+            stateObject.RemainingNeededData -= readLength;
+            
+            if (stateObject.RemainingNeededData <= 0)
+                ProcessReceivedData(stateObject);
+
+            TryReadMoreData(stateObject, bytes, 0, readLength);
+        }
+
+        private void TryReadMoreData(ReceivedDataStateObject stateObject, int bytes, int index, int readLength)
+        {
+            ReadAndProcessData(stateObject, bytes - readLength, index + readLength);
+        }
+
         private void ProcessReceivedData(ReceivedDataStateObject stateObject)
         {
-            if (stateObject == null || stateObject.Data == null)
+            if (stateObject?.Data is null)
             {
                 return;
             }
 
             if (!string.IsNullOrEmpty(stateObject.Data) && stateObject.Data.TrimStart().StartsWith("<"))
             {
-                var receivedData = XDocument.Parse(stateObject.Data);
-                var root = receivedData.Root;
-                if (root == null)
+                try
                 {
-                    return;
-                }
+                    var receivedData = XDocument.Parse(stateObject.Data);
+                    var root = receivedData.Root;
+                    if (root is null)
+                    {
+                        return;
+                    }
 
-                if (_pendingCommand != null && root.Name.LocalName != "CornerstoneMessage")
-                {
-                    var sender = _pendingCommand.Sender;
-                    //Send the received data back to the object that issued the command so it can process the response.
-                    sender?.ProcessResponse(receivedData);
+                    if (_pendingCommand is not null && root.Name.LocalName != "CornerstoneMessage")
+                    {
+                        var sender = _pendingCommand.Sender;
+                        //Send the received data back to the object that issued the command so it can process the response.
+                        sender?.ProcessResponse(receivedData);
 
-                    //We no longer have a pending command to keep track of.
-                    _pendingCommand = null;
+                        //We no longer have a pending command to keep track of.
+                        // _pendingCommand = null;
+                    }
+                    else
+                    {
+                        EventAggregatorContext.Current.GetEvent<MessageDataEvent>().Publish(receivedData);
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    EventAggregatorContext.Current.GetEvent<MessageDataEvent>().Publish(receivedData);
+                    Console.WriteLine(e);
+                    throw;
                 }
             }
             else if (!string.IsNullOrEmpty(stateObject.Data) &&
                      (stateObject.Data.TrimStart().StartsWith("{") || stateObject.Data.TrimStart().StartsWith("[")))
             {
-                var sender = _pendingCommand.Sender;
+                var sender = _pendingCommand?.Sender;
                 //Send the received data back to the object that issued the command so it can process the response.
                 sender?.ProcessResponse(stateObject.Data);
-                _pendingCommand = null;
+                // _pendingCommand = null;
             }
             else
             {
-                var sender = _pendingCommand.Sender;
-                if (sender != null)
-                {
-                    //Send the received data back to the object that issued the command so it can process the response.
-                    sender.ProcessResponse(stateObject.Data);
-                }
+                //Send the received data back to the object that issued the command so it can process the response.
+                _pendingCommand?.Sender?.ProcessResponse(stateObject.Data);
                 EventAggregatorContext.Current.GetEvent<MessageData2Event>().Publish(stateObject.Data);
             }
             /*var receivedData = XDocument.Parse(stateObject.Data);
             var root = receivedData.Root;
-            if (root == null)
+            if (root is null)
             {
                 return;
             }
 
-            if (_pendingCommand != null && root.Name.LocalName != "CornerstoneMessage")
+            if (_pendingCommand is not null && root.Name.LocalName != "CornerstoneMessage")
             {
                 var sender = _pendingCommand.Sender;
-                if (sender != null)
+                if (sender is not null)
                 {
                     //Send the received data back to the object that issued the command so it can process the response.
                     sender.ProcessResponse(receivedData);
@@ -398,6 +414,14 @@ namespace CornerstoneRemoteControlClient.Communications
             }*/
         }
 
+        private void SendData(IEnumerable<string> dataPackets)
+        {
+            foreach (var data in dataPackets)
+            {
+                SendData(EncodingToUse.GetBytes(data));
+            }
+        }
+
         /// <summary>
         /// Sends the data to Cornerstone.
         /// </summary>
@@ -406,13 +430,15 @@ namespace CornerstoneRemoteControlClient.Communications
         {
             try
             {
-                if (_tcpClient != null && data != null)
+                if (_tcpClient is not null && data is not null)
                 {
                     var lengthArray = BitConverter.GetBytes(data.Length);
                     _tcpClient.GetStream().Write(lengthArray, 0, 4);
-                    EventAggregatorContext.Current.GetEvent<RecordDataTrafficEvent>().Publish(new DataTrafficSentReceivedViewModel(lengthArray, true));
+                    EventAggregatorContext.Current.GetEvent<RecordDataTrafficEvent>().Publish(
+                        new DataTrafficSentReceivedViewModel(lengthArray, true));
                     _tcpClient.GetStream().Write(data, 0, data.Length);
-                    EventAggregatorContext.Current.GetEvent<RecordDataTrafficEvent>().Publish(new DataTrafficSentReceivedViewModel(data, true));
+                    EventAggregatorContext.Current.GetEvent<RecordDataTrafficEvent>().Publish(
+                        new DataTrafficSentReceivedViewModel(data, true));
 
                     //stop and restart the heartbeat timer. We don't need to
                     //send the heartbeat if we have just recently sent some
@@ -464,12 +490,12 @@ namespace CornerstoneRemoteControlClient.Communications
         /// <summary>
         /// This queue holds the commands to be sent to Cornerstone. They will be de-queued from a background thread.
         /// </summary>
-        private readonly ConcurrentQueue<SendDataEventArgs> _pendingCommands = new ConcurrentQueue<SendDataEventArgs>();
+        private readonly ConcurrentQueue<SendDataEventArgs> _pendingCommands = new();
 
         /// <summary>
         /// Event signaling that a request has been enqueued.
         /// </summary>
-        private readonly AutoResetEvent _requestEnqueued = new AutoResetEvent(false);
+        private readonly AutoResetEvent _requestEnqueued = new(false);
 
         /// <summary>
         /// The current pending command.

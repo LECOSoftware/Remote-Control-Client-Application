@@ -1,4 +1,4 @@
-﻿// Copyright © LECO Corporation 2013.  All Rights Reserved.
+﻿// © 2013-2022 LECO Corporation.
 
 using System;
 
@@ -14,9 +14,6 @@ namespace CornerstoneRemoteControlClient.Communications
         /// </summary>
         public String Data;
 
-        /// <summary>
-        /// Number of bytes contained in the total response.
-        /// </summary>
-        public int Length;
+        public int RemainingNeededData;
     }
 }
